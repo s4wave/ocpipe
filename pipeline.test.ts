@@ -4,21 +4,15 @@ import { Module } from './module.js'
 import { Predict } from './predict.js'
 import { signature, field } from './signature.js'
 import { createBaseState } from './state.js'
+import { TMP_DIR } from '../paths.js'
 import { MockAgentBackend, createMockContext } from './testing.js'
 import type { ExecutionContext, BaseState } from './types.js'
 import * as agentModule from './agent.js'
 import * as fs from 'fs/promises'
+import { join } from 'path'
 
-// Mock the agent module
-vi.mock('./agent.js', async (importOriginal) => {
-  const original = await importOriginal<typeof agentModule>()
-  return {
-    ...original,
-    runAgent: vi.fn(),
-  }
-})
-
-const mockRunAgent = vi.mocked(agentModule.runAgent)
+// Mock the agent module - Bun-compatible approach using spyOn
+const mockRunAgent = vi.spyOn(agentModule, 'runAgent')
 
 // Test fixtures
 const TestSig = signature({
@@ -82,7 +76,7 @@ describe('Module', () => {
 
 describe('Pipeline', () => {
   let mockBackend: MockAgentBackend
-  const testCheckpointDir = '/tmp/dsts-test-checkpoints'
+  const testCheckpointDir = join(TMP_DIR, 'dsts-test-checkpoints')
 
   beforeEach(async () => {
     mockBackend = new MockAgentBackend()
@@ -109,7 +103,7 @@ describe('Pipeline', () => {
     defaultModel: { providerID: 'test', modelID: 'test-model' },
     defaultAgent: 'general',
     checkpointDir: testCheckpointDir,
-    logDir: '/tmp',
+    logDir: TMP_DIR,
   }
 
   it('creates pipeline with initial state', () => {

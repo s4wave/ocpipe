@@ -14,7 +14,7 @@ import type {
   StepResult,
 } from './types.js'
 import { logStep } from './agent.js'
-import { JsonParseError, MarkerParseError } from './parsing.js'
+import { JsonParseError, SchemaValidationError } from './parsing.js'
 
 /** Pipeline orchestrates workflow execution with state management. */
 export class Pipeline<S extends BaseState> {
@@ -90,8 +90,16 @@ export class Pipeline<S extends BaseState> {
         return result
       } catch (err) {
         lastError = err as Error
-        const isParseError =
-          err instanceof JsonParseError || err instanceof MarkerParseError
+        const isParseError = err instanceof JsonParseError
+        const isSchemaError = err instanceof SchemaValidationError
+
+        // Don't retry SchemaValidationError - corrections already attempted
+        if (isSchemaError) {
+          console.error(
+            `Step ${stepName} failed with schema validation error (corrections exhausted): ${lastError.message}`,
+          )
+          break
+        }
 
         if (
           attempt < retryConfig.maxAttempts &&

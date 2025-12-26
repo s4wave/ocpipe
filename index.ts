@@ -66,12 +66,18 @@ export { runAgent, logStep } from './agent.js'
 export {
   parseResponse,
   parseJson,
-  parseMarkers,
   parseJsonFromResponse,
-  parseFieldMarkers,
+  tryParseResponse,
+  tryParseJson,
+  extractJsonString,
+  buildPatchPrompt,
+  buildBatchPatchPrompt,
+  extractPatch,
+  applyJqPatch,
+  zodTypeToString,
   JsonParseError,
-  MarkerParseError,
   ValidationError,
+  SchemaValidationError,
 } from './parsing.js'
 
 // Testing utilities
@@ -105,4 +111,8 @@ export type {
   // Agent types
   RunAgentOptions,
   RunAgentResult,
+  // Correction types
+  CorrectionConfig,
+  FieldError,
+  TryParseResult,
 } from './types.js'

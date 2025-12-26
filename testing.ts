@@ -41,28 +41,6 @@ export class MockAgentBackend {
     })
   }
 
-  /** addMarkerResponse adds a mock field marker response. */
-  addMarkerResponse(
-    fields: Record<string, unknown>,
-    options?: Partial<MockResponse>,
-  ): this {
-    const lines: string[] = []
-    for (const [name, value] of Object.entries(fields)) {
-      lines.push(`[[ ## ${name} ## ]]`)
-      if (typeof value === 'object') {
-        lines.push(JSON.stringify(value))
-      } else {
-        lines.push(String(value))
-      }
-      lines.push('')
-    }
-    lines.push('[[ ## completed ## ]]')
-    return this.addResponse({
-      response: lines.join('\n'),
-      ...options,
-    })
-  }
-
   /** getCalls returns all recorded calls. */
   getCalls(): RunAgentOptions[] {
     return this.calls

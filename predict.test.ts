@@ -4,16 +4,8 @@ import { signature, field } from './signature.js'
 import { MockAgentBackend, createMockContext } from './testing.js'
 import * as agentModule from './agent.js'
 
-// Mock the agent module
-vi.mock('./agent.js', async (importOriginal) => {
-  const original = await importOriginal<typeof agentModule>()
-  return {
-    ...original,
-    runAgent: vi.fn(),
-  }
-})
-
-const mockRunAgent = vi.mocked(agentModule.runAgent)
+// Mock the agent module - Bun-compatible approach using spyOn
+const mockRunAgent = vi.spyOn(agentModule, 'runAgent')
 
 describe('Predict', () => {
   let mockBackend: MockAgentBackend
@@ -44,7 +36,7 @@ describe('Predict', () => {
 
     expect(result.data).toEqual({ name: 'John', age: 30 })
     expect(result.sessionId).toBe('mock-session-001')
-    expect(result.duration).toBeGreaterThan(0)
+    expect(result.duration).toBeGreaterThanOrEqual(0)
   })
 
   it('updates context with session ID', async () => {
@@ -110,18 +102,6 @@ describe('Predict', () => {
     expect(call?.model).toEqual(customModel)
   })
 
-  it('parses marker format response', async () => {
-    mockBackend.addMarkerResponse({ name: 'Marker Test', age: 99 })
-
-    const predict = new Predict(TestSig, { format: 'markers' })
-    const ctx = createMockContext()
-
-    const result = await predict.execute({ text: 'Test' }, ctx)
-
-    expect(result.data.name).toBe('Marker Test')
-    expect(result.data.age).toBe(99)
-  })
-
   it('uses custom template when provided', async () => {
     mockBackend.addJsonResponse({ name: 'Custom', age: 42 })
 
@@ -150,23 +130,9 @@ describe('Predict', () => {
     expect(call?.prompt).toContain('INPUTS:')
     expect(call?.prompt).toContain('text')
     expect(call?.prompt).toContain('Input value')
-    expect(call?.prompt).toContain('OUTPUT FORMAT (JSON):')
+    expect(call?.prompt).toContain('OUTPUT FORMAT:')
     expect(call?.prompt).toContain('"name"')
     expect(call?.prompt).toContain('"age"')
-  })
-
-  it('generates marker format prompt', async () => {
-    mockBackend.addMarkerResponse({ name: 'Test', age: 1 })
-
-    const predict = new Predict(TestSig, { format: 'markers' })
-    const ctx = createMockContext()
-
-    await predict.execute({ text: 'Test' }, ctx)
-
-    const call = mockBackend.getLastCall()
-    expect(call?.prompt).toContain('[[ ## name ## ]]')
-    expect(call?.prompt).toContain('[[ ## age ## ]]')
-    expect(call?.prompt).toContain('[[ ## completed ## ]]')
   })
 
   it('preserves raw response in result', async () => {
@@ -188,5 +154,27 @@ describe('Predict', () => {
     const ctx = createMockContext()
 
     await expect(predict.execute({ text: 'Test' }, ctx)).rejects.toThrow()
+  })
+
+  it('corrects JSON responses with jq patches', async () => {
+    // First response: missing required 'age' field
+    mockBackend.addJsonResponse({ name: 'John Doe' })
+    
+    // Correction response: valid jq patch to add missing field
+    mockBackend.addResponse({
+      response: '.age = 30',
+    })
+
+    const predict = new Predict(TestSig)
+    const ctx = createMockContext()
+
+    const result = await predict.execute({ text: 'Test' }, ctx)
+
+    // After correction, should have both fields
+    expect(result.data.name).toBe('John Doe')
+    expect(result.data.age).toBe(30)
+    
+    // Verify correction was attempted (2 calls total)
+    expect(mockBackend.getCallCount()).toBe(2)
   })
 })

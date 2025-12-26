@@ -5,8 +5,10 @@
  */
 
 import type {
+  CorrectionConfig,
   ExecutionContext,
   FieldConfig,
+  FieldError,
   InferInputs,
   InferOutputs,
   ModelConfig,
@@ -15,7 +17,15 @@ import type {
   SignatureDef,
 } from './types.js'
 import { runAgent } from './agent.js'
-import { parseResponse } from './parsing.js'
+import {
+  tryParseResponse,
+  buildPatchPrompt,
+  buildBatchPatchPrompt,
+  extractPatch,
+  applyJqPatch,
+  zodTypeToString,
+  SchemaValidationError,
+} from './parsing.js'
 
 /** Configuration for a Predict instance. */
 export interface PredictConfig {
@@ -29,6 +39,8 @@ export interface PredictConfig {
   newSession?: boolean
   /** Custom prompt template function. */
   template?: (inputs: Record<string, unknown>) => string
+  /** Schema correction options (enabled by default, set to false to disable). */
+  correction?: CorrectionConfig | false
 }
 
 /** Predict executes a signature by calling an LLM and parsing the response. */
@@ -57,19 +69,120 @@ export class Predict<S extends SignatureDef<any, any>> {
     // Update context with new session ID for continuity
     ctx.sessionId = agentResult.sessionId
 
-    const parsed = parseResponse<InferOutputs<S>>(
+    const format = this.config.format ?? 'json'
+    const parseResult = tryParseResponse<InferOutputs<S>>(
       agentResult.text,
       this.sig.outputs,
-      this.config.format ?? 'json',
+      format,
     )
 
-    return {
-      data: parsed,
-      raw: agentResult.text,
-      sessionId: agentResult.sessionId,
-      duration: Date.now() - startTime,
-      model: this.config.model ?? ctx.defaultModel,
+    // If parsing succeeded, return the result
+    if (parseResult.ok && parseResult.data) {
+      return {
+        data: parseResult.data,
+        raw: agentResult.text,
+        sessionId: agentResult.sessionId,
+        duration: Date.now() - startTime,
+        model: this.config.model ?? ctx.defaultModel,
+      }
     }
+
+    // Parsing failed - attempt correction if enabled
+    if (this.config.correction !== false && parseResult.errors && parseResult.json) {
+      const corrected = await this.correctFields(
+        parseResult.json,
+        parseResult.errors,
+        ctx,
+        agentResult.sessionId,
+      )
+
+      if (corrected) {
+        return {
+          data: corrected,
+          raw: agentResult.text,
+          sessionId: agentResult.sessionId,
+          duration: Date.now() - startTime,
+          model: this.config.model ?? ctx.defaultModel,
+        }
+      }
+    }
+
+    // Correction failed or disabled - throw SchemaValidationError (non-retryable)
+    const errors = parseResult.errors ?? []
+    const errorMessages = errors.map((e) => `${e.path}: ${e.message}`).join('; ') || 'Unknown error'
+    const correctionAttempts = this.config.correction !== false ? (typeof this.config.correction === 'object' ? this.config.correction.maxRounds ?? 3 : 3) : 0
+    throw new SchemaValidationError(`Schema validation failed: ${errorMessages}`, errors, correctionAttempts)
+  }
+
+  /** correctFields attempts to fix field errors using same-session patches with retries. */
+  private async correctFields(
+    json: Record<string, unknown>,
+    initialErrors: FieldError[],
+    ctx: ExecutionContext,
+    sessionId: string,
+  ): Promise<InferOutputs<S> | null> {
+    const correctionConfig = typeof this.config.correction === 'object' ? this.config.correction : {}
+    const maxFields = correctionConfig.maxFields ?? 5
+    const maxRounds = correctionConfig.maxRounds ?? 3
+    const correctionModel = correctionConfig.model
+
+    let currentJson = JSON.parse(JSON.stringify(json)) as Record<string, unknown>
+    let currentErrors = initialErrors
+
+    for (let round = 1; round <= maxRounds; round++) {
+      const errorsToFix = currentErrors.slice(0, maxFields)
+      
+      if (errorsToFix.length === 0) {
+        break
+      }
+
+      console.error(`\n>>> Correction round ${round}/${maxRounds}: fixing ${errorsToFix.length} field(s)...`)
+
+      // Use batch prompt for multiple errors (more efficient)
+      const patchPrompt = errorsToFix.length === 1
+        ? buildPatchPrompt(errorsToFix[0]!, currentJson, this.sig.outputs)
+        : buildBatchPatchPrompt(errorsToFix, currentJson)
+
+      // Use same session (model has context) unless correction model specified
+      const patchResult = await runAgent({
+        prompt: patchPrompt,
+        model: correctionModel ?? ctx.defaultModel,
+        sessionId: correctionModel ? undefined : sessionId,
+        agent: ctx.defaultAgent,
+        timeoutSec: 60, // Short timeout for simple patches
+      })
+
+      // Extract and apply the patch (may be compound with |)
+      const patch = extractPatch(patchResult.text)
+      console.error(`  Patches: ${patch}`)
+      currentJson = applyJqPatch(currentJson, patch)
+
+      // Re-validate the corrected JSON - always use 'json' format since we have a JSON object now
+      const revalidated = tryParseResponse<InferOutputs<S>>(
+        JSON.stringify(currentJson),
+        this.sig.outputs,
+        'json',
+      )
+
+      if (revalidated.ok && revalidated.data) {
+        console.error(`  Schema correction successful after ${round} round(s)!`)
+        return revalidated.data
+      }
+
+      // Update errors for next round
+      currentErrors = revalidated.errors ?? []
+      
+      if (currentErrors.length === 0) {
+        // No errors but also no data? Shouldn't happen, but handle gracefully
+        console.error(`  Unexpected state: no errors but validation failed`)
+        break
+      }
+
+      console.error(`  Round ${round} complete, ${currentErrors.length} error(s) remaining`)
+    }
+
+    console.error(`  Schema correction failed after ${maxRounds} rounds`)
+    return null
   }
 
   /** buildPrompt generates the prompt from inputs. */
@@ -101,32 +214,23 @@ export class Predict<S extends SignatureDef<any, any>> {
     }
     lines.push('')
 
-    // Output format
-    if (this.config.format === 'markers') {
-      lines.push('OUTPUT FORMAT - respond with these exact field markers:')
-      lines.push('')
-      for (const [name, config] of Object.entries(this.sig.outputs) as [
-        string,
-        FieldConfig,
-      ][]) {
-        const desc = config.desc
-        lines.push(`[[ ## ${name} ## ]]`)
-        lines.push(`(${desc || name})`)
-        lines.push('')
-      }
-      lines.push('[[ ## completed ## ]]')
-    } else {
-      lines.push('OUTPUT FORMAT (JSON):')
-      lines.push('{')
-      for (const [name, config] of Object.entries(this.sig.outputs) as [
-        string,
-        FieldConfig,
-      ][]) {
-        const desc = config.desc
-        lines.push(`  "${name}": ...,  // ${desc || ''}`)
-      }
-      lines.push('}')
+    // Output format with explicit schema
+    lines.push('OUTPUT FORMAT:')
+    lines.push('Return a JSON object with EXACTLY these field names and types.')
+    lines.push('IMPORTANT: For optional fields, OMIT the field entirely - do NOT use null.')
+    lines.push('')
+    lines.push('```json')
+    lines.push('{')
+    const entries = Object.entries(this.sig.outputs) as [string, FieldConfig][]
+    for (let i = 0; i < entries.length; i++) {
+      const [name, config] = entries[i]!
+      const typeStr = zodTypeToString(config.type)
+      const desc = config.desc ? ` // ${config.desc}` : ''
+      const comma = i < entries.length - 1 ? ',' : ''
+      lines.push(`  "${name}": <${typeStr}>${comma}${desc}`)
     }
+    lines.push('}')
+    lines.push('```')
 
     return lines.join('\n')
   }

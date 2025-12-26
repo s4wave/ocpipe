@@ -14,9 +14,11 @@ import { Module } from './module.js'
 import { Pipeline } from './pipeline.js'
 import { signature, field } from './signature.js'
 import { createBaseState } from './state.js'
+import { TMP_DIR } from '../paths.js'
 import type { ExecutionContext, BaseState } from './types.js'
 import { z } from 'zod'
 import { mkdir, rm } from 'fs/promises'
+import { join } from 'path'
 
 // Skip these tests unless DSTS_INTEGRATION=1 is set
 const runIntegration = process.env.DSTS_INTEGRATION === '1'
@@ -27,7 +29,7 @@ const GROK_MODEL = {
   modelID: 'grok-code-fast-1',
 }
 
-const testCheckpointDir = '/tmp/dsts-integration-test'
+const testCheckpointDir = join(TMP_DIR, 'dsts-integration-test')
 
 describe.skipIf(!runIntegration)('DSTS Integration', () => {
   beforeAll(async () => {
@@ -70,7 +72,7 @@ describe.skipIf(!runIntegration)('DSTS Integration', () => {
       expect(result.duration).toBeGreaterThan(0)
     }, 30000)
 
-    it('executes a marker format signature', async () => {
+    it('executes a JSON format signature', async () => {
       const SummarizeSig = signature({
         doc: 'Summarize the text in one sentence.',
         inputs: {
@@ -82,7 +84,7 @@ describe.skipIf(!runIntegration)('DSTS Integration', () => {
         },
       })
 
-      const predict = new Predict(SummarizeSig, { format: 'markers' })
+      const predict = new Predict(SummarizeSig)
       const ctx: ExecutionContext = {
         sessionId: undefined,
         defaultModel: GROK_MODEL,

@@ -147,7 +147,7 @@ export type InferOutputs<S extends SignatureDef<any, any>> =
 // ============================================================================
 
 /** Output format for LLM responses. */
-export type OutputFormat = 'json' | 'markers'
+export type OutputFormat = 'json'
 
 // ============================================================================
 // Retry Configuration
@@ -157,8 +157,48 @@ export type OutputFormat = 'json' | 'markers'
 export interface RetryConfig {
   /** Maximum number of attempts. */
   maxAttempts: number
-  /** Whether to retry on parse errors (JSON/marker failures). */
+  /** Whether to retry on parse errors (JSON failures). */
   onParseError?: boolean
+}
+
+// ============================================================================
+// Schema Correction
+// ============================================================================
+
+/** Configuration for automatic schema correction on parse failures. */
+export interface CorrectionConfig {
+  /** Use a different model for corrections (default: same model, same session). */
+  model?: ModelConfig
+  /** Maximum number of fields to attempt correcting per round (default: 5). */
+  maxFields?: number
+  /** Maximum number of correction rounds before giving up (default: 3). */
+  maxRounds?: number
+}
+
+/** A field-level error from schema validation. */
+export interface FieldError {
+  /** The field path that failed (e.g., "issues.0.issue_type"). */
+  path: string
+  /** Human-readable error message. */
+  message: string
+  /** Expected type description. */
+  expectedType: string
+  /** If a similar field was found, its name. */
+  foundField?: string
+  /** The value found at the wrong field. */
+  foundValue?: unknown
+}
+
+/** Result from trying to parse a response. */
+export interface TryParseResult<T> {
+  /** Whether parsing succeeded. */
+  ok: boolean
+  /** Parsed data if successful. */
+  data?: T
+  /** Field errors if validation failed. */
+  errors?: FieldError[]
+  /** The extracted JSON object (even if validation failed). */
+  json?: Record<string, unknown>
 }
 
 // ============================================================================

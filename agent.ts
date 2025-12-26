@@ -5,7 +5,8 @@
  */
 
 import { spawn } from 'child_process'
-import { PROJECT_ROOT } from '../paths.js'
+import { mkdir } from 'fs/promises'
+import { PROJECT_ROOT, TMP_DIR } from '../paths.js'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
 
 /** runAgent executes an OpenCode agent with a prompt, streaming output in real-time. */
@@ -113,9 +114,10 @@ export async function runAgent(
 
 /** exportSession exports a session and extracts assistant text responses. */
 async function exportSession(sessionId: string): Promise<string | null> {
-  const tmpPath = `/tmp/opencode_export_${Date.now()}.json`
+  const tmpPath = `${TMP_DIR}/opencode_export_${Date.now()}.json`
 
   try {
+    await mkdir(TMP_DIR, { recursive: true })
     const proc = Bun.spawn(
       [
         'opencode',
