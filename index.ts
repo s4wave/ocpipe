@@ -5,7 +5,7 @@
  *
  * @example
  * ```typescript
- * import { signature, field, Predict, Module, Pipeline } from './dsts/index.js'
+ * import { signature, field, SignatureModule, Pipeline } from './dsts/index.js'
  * import { z } from 'zod'
  *
  * // Define a signature
@@ -20,13 +20,15 @@
  *   },
  * })
  *
- * // Create a module
- * class IntentParser extends Module<{ description: string }, { intent: string }> {
- *   private parse = this.predict(ParseIntent)
+ * // Create a module (types inferred from signature)
+ * class IntentParser extends SignatureModule<typeof ParseIntent> {
+ *   constructor() {
+ *     super(ParseIntent)
+ *   }
  *
- *   async forward(input: { description: string }, ctx: ExecutionContext) {
- *     const result = await this.parse.execute(input, ctx)
- *     return { intent: result.data.intent }
+ *   async forward(input, ctx) {
+ *     const result = await this.predictor.execute(input, ctx)
+ *     return result.data
  *   }
  * }
  *
@@ -51,7 +53,7 @@ export { Predict } from './predict.js'
 export type { PredictConfig } from './predict.js'
 
 // Module base class
-export { Module } from './module.js'
+export { Module, SignatureModule } from './module.js'
 
 // Pipeline orchestrator
 export { Pipeline } from './pipeline.js'
@@ -103,7 +105,6 @@ export type {
   SignatureDef,
   InferInputs,
   InferOutputs,
-  OutputFormat,
   // Pipeline types
   RetryConfig,
   PipelineConfig,

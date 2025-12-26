@@ -52,7 +52,7 @@ describe.skipIf(!runIntegration)('DSTS Integration', () => {
         },
       })
 
-      const predict = new Predict(ExtractInfoSig, { format: 'json' })
+      const predict = new Predict(ExtractInfoSig)
       const ctx: ExecutionContext = {
         sessionId: undefined,
         defaultModel: GROK_MODEL,

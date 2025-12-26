@@ -62,7 +62,7 @@ describe('parseResponse', () => {
 
   it('parses JSON response', () => {
     const response = '{"result": "hello"}'
-    const result = parseResponse<{ result: string }>(response, schema, 'json')
+    const result = parseResponse<{ result: string }>(response, schema)
     expect(result).toEqual({ result: 'hello' })
   })
 })

@@ -12,7 +12,6 @@ import type {
   InferInputs,
   InferOutputs,
   ModelConfig,
-  OutputFormat,
   PredictResult,
   SignatureDef,
 } from './types.js'
@@ -29,8 +28,6 @@ import {
 
 /** Configuration for a Predict instance. */
 export interface PredictConfig {
-  /** Output format for LLM response parsing (default: json). */
-  format?: OutputFormat
   /** Override the pipeline's default agent. */
   agent?: string
   /** Override the pipeline's default model. */
@@ -69,11 +66,9 @@ export class Predict<S extends SignatureDef<any, any>> {
     // Update context with new session ID for continuity
     ctx.sessionId = agentResult.sessionId
 
-    const format = this.config.format ?? 'json'
     const parseResult = tryParseResponse<InferOutputs<S>>(
       agentResult.text,
       this.sig.outputs,
-      format,
     )
 
     // If parsing succeeded, return the result
@@ -161,7 +156,6 @@ export class Predict<S extends SignatureDef<any, any>> {
       const revalidated = tryParseResponse<InferOutputs<S>>(
         JSON.stringify(currentJson),
         this.sig.outputs,
-        'json',
       )
 
       if (revalidated.ok && revalidated.data) {

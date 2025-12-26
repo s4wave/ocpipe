@@ -31,7 +31,7 @@ DSTS separates the **what** (Signatures declare input/output contracts), the **h
 ## Quick Start
 
 ```typescript
-import { signature, field, Predict, Module, Pipeline, createBaseState } from 'dsts'
+import { signature, field, SignatureModule, Pipeline, createBaseState } from 'dsts'
 import { z } from 'zod'
 
 // 1. Define a signature (the contract)
@@ -48,12 +48,14 @@ const ParseIntent = signature({
 })
 
 // 2. Create a module (the logic)
-class IntentParser extends Module<{ description: string }, { intent: string }> {
-  private parse = this.predict(ParseIntent)
+class IntentParser extends SignatureModule<typeof ParseIntent> {
+  constructor() {
+    super(ParseIntent)
+  }
 
-  async forward(input: { description: string }, ctx: ExecutionContext) {
-    const result = await this.parse.execute(input, ctx)
-    return { intent: result.data.intent }
+  async forward(input, ctx) {
+    const result = await this.predictor.execute(input, ctx)
+    return result.data  // Full signature output
   }
 }
 
@@ -148,6 +150,25 @@ Return a JSON object with EXACTLY these field names and types.
 ### Module
 
 A Module encapsulates a logical unit of work that may use one or more Predictors. Modules can call other Modules, enabling composition.
+
+**SignatureModule** - For simple modules that wrap a single signature with pass-through types:
+
+```typescript
+import { SignatureModule } from 'dsts'
+
+class IntentParser extends SignatureModule<typeof ParseIntent> {
+  constructor() {
+    super(ParseIntent)
+  }
+
+  async forward(input, ctx) {
+    const result = await this.predictor.execute(input, ctx)
+    return result.data  // Types inferred from ParseIntent
+  }
+}
+```
+
+**Module** - For complex modules with multiple predictors or transformed outputs:
 
 ```typescript
 import { Module } from 'dsts'

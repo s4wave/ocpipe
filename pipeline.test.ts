@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { Pipeline } from './pipeline.js'
-import { Module } from './module.js'
+import { Module, SignatureModule } from './module.js'
 import { Predict } from './predict.js'
 import { signature, field } from './signature.js'
 import { createBaseState } from './state.js'
@@ -21,12 +21,15 @@ const TestSig = signature({
   outputs: { output: field.string() },
 })
 
-class TestModule extends Module<{ input: string }, { output: string }> {
-  private pred = this.predict(TestSig)
+// SignatureModule example - types inferred from signature
+class TestModule extends SignatureModule<typeof TestSig> {
+  constructor() {
+    super(TestSig)
+  }
 
   async forward(input: { input: string }, ctx: ExecutionContext) {
-    const result = await this.pred.execute(input, ctx)
-    return { output: result.data.output }
+    const result = await this.predictor.execute(input, ctx)
+    return result.data
   }
 }
 
@@ -48,14 +51,14 @@ describe('Module', () => {
     mockRunAgent.mockImplementation(mockBackend.createRunner())
   })
 
-  it('registers predictors via this.predict()', () => {
+  it('SignatureModule provides predictor and infers types', () => {
     const module = new TestModule()
     const predictors = module.getPredictors()
     expect(predictors).toHaveLength(1)
     expect(predictors[0]).toBeInstanceOf(Predict)
   })
 
-  it('executes forward method with context', async () => {
+  it('SignatureModule executes forward with inferred types', async () => {
     mockBackend.addJsonResponse({ output: 'hello world' })
 
     const module = new TestModule()
@@ -65,7 +68,7 @@ describe('Module', () => {
     expect(result).toEqual({ output: 'hello world' })
   })
 
-  it('can work without predictions (pure logic)', async () => {
+  it('Module can work without predictions (pure logic)', async () => {
     const module = new SimpleModule()
     const ctx = createMockContext()
 

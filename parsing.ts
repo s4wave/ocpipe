@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod'
-import type { FieldConfig, FieldError, OutputFormat, TryParseResult } from './types.js'
+import type { FieldConfig, FieldError, TryParseResult } from './types.js'
 
 /** JsonParseError is thrown when JSON parsing fails. */
 export class JsonParseError extends Error {
@@ -47,7 +47,6 @@ export class SchemaValidationError extends Error {
 export function parseResponse<T>(
   response: string,
   outputSchema: Record<string, FieldConfig>,
-  _format: OutputFormat,
 ): T {
   return parseJson(response, outputSchema)
 }
@@ -56,7 +55,6 @@ export function parseResponse<T>(
 export function tryParseResponse<T>(
   response: string,
   outputSchema: Record<string, FieldConfig>,
-  _format: OutputFormat,
 ): TryParseResult<T> {
   return tryParseJson(response, outputSchema)
 }

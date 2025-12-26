@@ -4,7 +4,12 @@
  * Modules encapsulate logical units of work that use one or more Predictors.
  */
 
-import type { ExecutionContext, SignatureDef } from './types.js'
+import type {
+  ExecutionContext,
+  InferInputs,
+  InferOutputs,
+  SignatureDef,
+} from './types.js'
 import { Predict, type PredictConfig } from './predict.js'
 
 /** Module is the abstract base class for composable workflow units. */
@@ -27,5 +32,19 @@ export abstract class Module<I, O> {
   /** getPredictors returns all registered predictors (for future optimization). */
   getPredictors(): Predict<any>[] {
     return this.predictors
+  }
+}
+
+/** SignatureModule is a Module whose types are derived from a Signature. */
+export abstract class SignatureModule<
+  S extends SignatureDef<any, any>,
+> extends Module<InferInputs<S>, InferOutputs<S>> {
+  protected readonly sig: S
+  protected readonly predictor: Predict<S>
+
+  constructor(sig: S, config?: PredictConfig) {
+    super()
+    this.sig = sig
+    this.predictor = this.predict(sig, config)
   }
 }
