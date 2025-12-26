@@ -16,9 +16,7 @@ export async function runAgent(
   const { prompt, agent, model, sessionId, timeoutSec = 300 } = options
 
   const modelStr = `${model.providerID}/${model.modelID}`
-  const sessionInfo = sessionId
-    ? `[session:${sessionId.slice(0, 12)}]`
-    : '[new session]'
+  const sessionInfo = sessionId ? `[session:${sessionId}]` : '[new session]'
   const promptPreview = prompt.slice(0, 50).replace(/\n/g, ' ')
 
   console.error(
@@ -94,9 +92,9 @@ export async function runAgent(
         }
       }
 
-      const sessionShort = newSessionId ? newSessionId.slice(0, 8) : 'none'
+      const sessionStr = newSessionId || 'none'
       console.error(
-        `<<< OpenCode done (${response.length} chars) [session:${sessionShort}]`,
+        `<<< OpenCode done (${response.length} chars) [session:${sessionStr}]`,
       )
 
       resolve({
