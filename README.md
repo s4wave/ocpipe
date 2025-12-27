@@ -3,6 +3,11 @@
 <div align="center">
   <h3>Declarative Self-Improving TypeScript</h3>
   <p>A DSPy-inspired SDK for building LLM workflow pipelines with <a href="https://opencode.ai">OpenCode</a>.</p>
+  <p>
+    <a href="https://github.com/s4wave/dsts">GitHub</a> |
+    <a href="https://github.com/s4wave/dsts/blob/main/GETTING_STARTED.md">Getting Started</a> |
+    <a href="https://github.com/s4wave/dsts/blob/main/LICENSE">MIT License</a>
+  </p>
 </div>
 
 <div align="center">
@@ -318,3 +323,12 @@ If you need tool access, configure your OpenCode agent appropriately. The agent 
 - [OpenCode](https://opencode.ai) CLI installed and configured
 - [Zod](https://zod.dev) for schema validation
 
+## Installation
+
+```bash
+bun add dsts zod
+```
+
+## License
+
+MIT - see [LICENSE](https://github.com/s4wave/dsts/blob/main/LICENSE) for details.

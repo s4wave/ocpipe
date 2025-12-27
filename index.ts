@@ -72,15 +72,22 @@ export {
   tryParseResponse,
   tryParseJson,
   extractJsonString,
+  // jq-style patches
   buildPatchPrompt,
   buildBatchPatchPrompt,
   extractPatch,
   applyJqPatch,
+  // JSON Patch (RFC 6902)
+  buildJsonPatchPrompt,
+  buildBatchJsonPatchPrompt,
+  extractJsonPatch,
+  applyJsonPatch,
   zodTypeToString,
   JsonParseError,
   ValidationError,
   SchemaValidationError,
 } from './parsing.js'
+export type { JsonPatchOperation } from './parsing.js'
 
 // Testing utilities
 export {
@@ -113,6 +120,7 @@ export type {
   RunAgentOptions,
   RunAgentResult,
   // Correction types
+  CorrectionMethod,
   CorrectionConfig,
   FieldError,
   TryParseResult,

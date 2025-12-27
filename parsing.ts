@@ -7,6 +7,14 @@
 import { z } from 'zod'
 import type { FieldConfig, FieldError, TryParseResult } from './types.js'
 
+/** JSON Patch operation (RFC 6902). */
+export interface JsonPatchOperation {
+  op: 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'
+  path: string
+  value?: unknown
+  from?: string
+}
+
 /** JsonParseError is thrown when JSON parsing fails. */
 export class JsonParseError extends Error {
   constructor(
@@ -505,6 +513,268 @@ export function applyJqPatch(
   } catch (e) {
     console.error(`  jq execution failed: ${e}`)
     return obj
+  }
+}
+
+// ============================================================================
+// JSON Patch (RFC 6902) Support
+// ============================================================================
+
+/** buildJsonPatchPrompt creates a prompt asking for RFC 6902 JSON Patch operations. */
+export function buildJsonPatchPrompt(
+  error: FieldError,
+  currentJson: Record<string, unknown>,
+  _schema: Record<string, FieldConfig>,
+): string {
+  const lines: string[] = []
+
+  lines.push('Your JSON output has a schema error that needs correction.')
+  lines.push('')
+  lines.push(`Field: "${error.path}"`)
+  lines.push(`Issue: ${error.message}`)
+  lines.push(`Expected type: ${error.expectedType}`)
+
+  if (error.foundField) {
+    lines.push(`Found similar field: "${error.foundField}" with value: ${JSON.stringify(error.foundValue)}`)
+  }
+
+  lines.push('')
+  lines.push('Current JSON (abbreviated):')
+  lines.push('```json')
+  lines.push(JSON.stringify(abbreviateJson(currentJson), null, 2))
+  lines.push('```')
+  lines.push('')
+  lines.push('Respond with ONLY a JSON Patch array (RFC 6902) to fix this field. Examples:')
+  lines.push('- [{"op": "add", "path": "/field_name", "value": "new_value"}]')
+  lines.push('- [{"op": "replace", "path": "/field_name", "value": 123}]')
+  lines.push('- [{"op": "move", "from": "/wrong_field", "path": "/correct_field"}]')
+  lines.push('- [{"op": "remove", "path": "/wrong_field"}, {"op": "add", "path": "/correct_field", "value": "..."}]')
+  lines.push('')
+  lines.push('Your JSON Patch:')
+
+  return lines.join('\n')
+}
+
+/** buildBatchJsonPatchPrompt creates a prompt asking for JSON Patch operations for multiple errors. */
+export function buildBatchJsonPatchPrompt(
+  errors: FieldError[],
+  currentJson: Record<string, unknown>,
+): string {
+  const lines: string[] = []
+
+  lines.push('Your JSON output has schema errors that need correction.')
+  lines.push('')
+  lines.push('ERRORS:')
+  for (let i = 0; i < errors.length; i++) {
+    const error = errors[i]!
+    lines.push(`${i + 1}. Field "${error.path}": ${error.message} (expected: ${error.expectedType})`)
+    if (error.foundField) {
+      lines.push(`   Found similar: "${error.foundField}" = ${JSON.stringify(error.foundValue)}`)
+    }
+  }
+
+  lines.push('')
+  lines.push('Current JSON (abbreviated):')
+  lines.push('```json')
+  lines.push(JSON.stringify(abbreviateJson(currentJson), null, 2))
+  lines.push('```')
+  lines.push('')
+  lines.push('Respond with a JSON Patch array (RFC 6902) to fix ALL errors. Examples:')
+  lines.push('- [{"op": "move", "from": "/type", "path": "/issue_type"}]')
+  lines.push('- [{"op": "replace", "path": "/items/0/name", "value": "fixed"}]')
+  lines.push('- [{"op": "add", "path": "/missing_field", "value": "default"}]')
+  lines.push('')
+  lines.push('Your JSON Patch array:')
+
+  return lines.join('\n')
+}
+
+/** extractJsonPatch extracts a JSON Patch array from an LLM response. */
+export function extractJsonPatch(response: string): JsonPatchOperation[] {
+  // Try to find JSON array in code blocks first
+  const codeBlockMatch = response.match(/```(?:json)?\s*(\[[\s\S]*?\])[\s\S]*?```/)
+  if (codeBlockMatch?.[1]) {
+    try {
+      return JSON.parse(codeBlockMatch[1]) as JsonPatchOperation[]
+    } catch {
+      // Continue to try other methods
+    }
+  }
+
+  // Try to find raw JSON array by counting brackets
+  const startIdx = response.indexOf('[')
+  if (startIdx !== -1) {
+    let bracketCount = 0
+    let endIdx = startIdx
+    for (let i = startIdx; i < response.length; i++) {
+      if (response[i] === '[') bracketCount++
+      else if (response[i] === ']') {
+        bracketCount--
+        if (bracketCount === 0) {
+          endIdx = i + 1
+          break
+        }
+      }
+    }
+
+    if (endIdx > startIdx) {
+      try {
+        return JSON.parse(response.slice(startIdx, endIdx)) as JsonPatchOperation[]
+      } catch {
+        // Fall through to empty array
+      }
+    }
+  }
+
+  console.error(`  Could not extract JSON Patch from response: ${response.slice(0, 100)}...`)
+  return []
+}
+
+/** toJsonPointer converts a dot-notation path to JSON Pointer format. */
+function toJsonPointer(path: string): string {
+  if (path.startsWith('/')) return path
+  if (path === '') return ''
+  // Convert dot notation to JSON Pointer
+  // e.g., "items.0.name" -> "/items/0/name"
+  return '/' + path.replace(/\./g, '/').replace(/\[(\d+)\]/g, '/$1')
+}
+
+/** applyJsonPatch applies RFC 6902 JSON Patch operations to an object. */
+export function applyJsonPatch(
+  obj: Record<string, unknown>,
+  operations: JsonPatchOperation[],
+): Record<string, unknown> {
+  let result = JSON.parse(JSON.stringify(obj)) as Record<string, unknown>
+
+  for (const op of operations) {
+    const path = toJsonPointer(op.path)
+    const pathParts = path.split('/').filter(Boolean)
+    
+    try {
+      switch (op.op) {
+        case 'add':
+        case 'replace': {
+          if (pathParts.length === 0) {
+            // Replace entire document
+            if (typeof op.value === 'object' && op.value !== null) {
+              result = op.value as Record<string, unknown>
+            }
+          } else {
+            setValueAtPath(result, pathParts, op.value)
+          }
+          break
+        }
+        case 'remove': {
+          removeValueAtPath(result, pathParts)
+          break
+        }
+        case 'move': {
+          if (!op.from) break
+          const fromPath = toJsonPointer(op.from)
+          const fromParts = fromPath.split('/').filter(Boolean)
+          const value = getValueAtPath(result, fromParts)
+          removeValueAtPath(result, fromParts)
+          setValueAtPath(result, pathParts, value)
+          break
+        }
+        case 'copy': {
+          if (!op.from) break
+          const srcPath = toJsonPointer(op.from)
+          const srcParts = srcPath.split('/').filter(Boolean)
+          const srcValue = getValueAtPath(result, srcParts)
+          setValueAtPath(result, pathParts, JSON.parse(JSON.stringify(srcValue)))
+          break
+        }
+        case 'test': {
+          // Test operation - verify value matches, throw if not
+          const actualValue = getValueAtPath(result, pathParts)
+          if (JSON.stringify(actualValue) !== JSON.stringify(op.value)) {
+            console.error(`  JSON Patch test failed: ${path} expected ${JSON.stringify(op.value)}, got ${JSON.stringify(actualValue)}`)
+          }
+          break
+        }
+      }
+    } catch (e) {
+      console.error(`  JSON Patch operation failed: ${JSON.stringify(op)} - ${e}`)
+    }
+  }
+
+  return result
+}
+
+/** getValueAtPath retrieves a value at a JSON Pointer path. */
+function getValueAtPath(obj: Record<string, unknown>, parts: string[]): unknown {
+  let current: unknown = obj
+  for (const part of parts) {
+    if (current === null || current === undefined) return undefined
+    if (Array.isArray(current)) {
+      const idx = parseInt(part, 10)
+      current = current[idx]
+    } else if (typeof current === 'object') {
+      current = (current as Record<string, unknown>)[part]
+    } else {
+      return undefined
+    }
+  }
+  return current
+}
+
+/** setValueAtPath sets a value at a JSON Pointer path. */
+function setValueAtPath(obj: Record<string, unknown>, parts: string[], value: unknown): void {
+  if (parts.length === 0) return
+  
+  let current: unknown = obj
+  for (let i = 0; i < parts.length - 1; i++) {
+    const part = parts[i]!
+    if (Array.isArray(current)) {
+      const idx = parseInt(part, 10)
+      if (current[idx] === undefined) {
+        // Create intermediate object or array
+        const nextPart = parts[i + 1]!
+        current[idx] = /^\d+$/.test(nextPart) ? [] : {}
+      }
+      current = current[idx]
+    } else if (typeof current === 'object' && current !== null) {
+      const rec = current as Record<string, unknown>
+      if (rec[part] === undefined) {
+        const nextPart = parts[i + 1]!
+        rec[part] = /^\d+$/.test(nextPart) ? [] : {}
+      }
+      current = rec[part]
+    }
+  }
+
+  const lastPart = parts[parts.length - 1]!
+  if (Array.isArray(current)) {
+    const idx = parseInt(lastPart, 10)
+    current[idx] = value
+  } else if (typeof current === 'object' && current !== null) {
+    (current as Record<string, unknown>)[lastPart] = value
+  }
+}
+
+/** removeValueAtPath removes a value at a JSON Pointer path. */
+function removeValueAtPath(obj: Record<string, unknown>, parts: string[]): void {
+  if (parts.length === 0) return
+
+  let current: unknown = obj
+  for (let i = 0; i < parts.length - 1; i++) {
+    const part = parts[i]!
+    if (Array.isArray(current)) {
+      current = current[parseInt(part, 10)]
+    } else if (typeof current === 'object' && current !== null) {
+      current = (current as Record<string, unknown>)[part]
+    } else {
+      return
+    }
+  }
+
+  const lastPart = parts[parts.length - 1]!
+  if (Array.isArray(current)) {
+    const idx = parseInt(lastPart, 10)
+    current.splice(idx, 1)
+  } else if (typeof current === 'object' && current !== null) {
+    delete (current as Record<string, unknown>)[lastPart]
   }
 }
 

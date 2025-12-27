@@ -7,6 +7,7 @@
 import { z } from 'zod'
 import type {
   CorrectionConfig,
+  CorrectionMethod,
   ExecutionContext,
   FieldConfig,
   FieldError,
@@ -19,10 +20,16 @@ import type {
 import { runAgent } from './agent.js'
 import {
   tryParseResponse,
+  // jq-style patches
   buildPatchPrompt,
   buildBatchPatchPrompt,
   extractPatch,
   applyJqPatch,
+  // JSON Patch (RFC 6902)
+  buildJsonPatchPrompt,
+  buildBatchJsonPatchPrompt,
+  extractJsonPatch,
+  applyJsonPatch,
   SchemaValidationError,
 } from './parsing.js'
 
@@ -117,6 +124,7 @@ export class Predict<S extends SignatureDef<any, any>> {
     sessionId: string,
   ): Promise<InferOutputs<S> | null> {
     const correctionConfig = typeof this.config.correction === 'object' ? this.config.correction : {}
+    const method: CorrectionMethod = correctionConfig.method ?? 'json-patch'
     const maxFields = correctionConfig.maxFields ?? 5
     const maxRounds = correctionConfig.maxRounds ?? 3
     const correctionModel = correctionConfig.model
@@ -131,12 +139,16 @@ export class Predict<S extends SignatureDef<any, any>> {
         break
       }
 
-      console.error(`\n>>> Correction round ${round}/${maxRounds}: fixing ${errorsToFix.length} field(s)...`)
+      console.error(`\n>>> Correction round ${round}/${maxRounds} [${method}]: fixing ${errorsToFix.length} field(s)...`)
 
-      // Use batch prompt for multiple errors (more efficient)
-      const patchPrompt = errorsToFix.length === 1
-        ? buildPatchPrompt(errorsToFix[0]!, currentJson, this.sig.outputs)
-        : buildBatchPatchPrompt(errorsToFix, currentJson)
+      // Build prompt based on correction method
+      const patchPrompt = method === 'jq'
+        ? (errorsToFix.length === 1
+            ? buildPatchPrompt(errorsToFix[0]!, currentJson, this.sig.outputs)
+            : buildBatchPatchPrompt(errorsToFix, currentJson))
+        : (errorsToFix.length === 1
+            ? buildJsonPatchPrompt(errorsToFix[0]!, currentJson, this.sig.outputs)
+            : buildBatchJsonPatchPrompt(errorsToFix, currentJson))
 
       // Use same session (model has context) unless correction model specified
       const patchResult = await runAgent({
@@ -147,12 +159,18 @@ export class Predict<S extends SignatureDef<any, any>> {
         timeoutSec: 60, // Short timeout for simple patches
       })
 
-      // Extract and apply the patch (may be compound with |)
-      const patch = extractPatch(patchResult.text)
-      console.error(`  Patches: ${patch}`)
-      currentJson = applyJqPatch(currentJson, patch)
+      // Extract and apply the patch based on method
+      if (method === 'jq') {
+        const patch = extractPatch(patchResult.text)
+        console.error(`  jq patch: ${patch}`)
+        currentJson = applyJqPatch(currentJson, patch)
+      } else {
+        const operations = extractJsonPatch(patchResult.text)
+        console.error(`  JSON Patch: ${JSON.stringify(operations)}`)
+        currentJson = applyJsonPatch(currentJson, operations)
+      }
 
-      // Re-validate the corrected JSON - always use 'json' format since we have a JSON object now
+      // Re-validate the corrected JSON
       const revalidated = tryParseResponse<InferOutputs<S>>(
         JSON.stringify(currentJson),
         this.sig.outputs,

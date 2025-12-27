@@ -1,14 +1,22 @@
 /**
  * Auto-correction example.
  *
- * Demonstrates DSTS's automatic schema correction using jq patches.
+ * Demonstrates DSTS's automatic schema correction.
  * This example uses a schema with specific field names that LLMs
  * sometimes get wrong (e.g., "type" instead of "issue_type").
+ *
+ * DSTS supports two correction methods:
+ * - 'json-patch' (default): RFC 6902 JSON Patch, no external dependencies
+ * - 'jq': jq-style expressions, requires jq binary installed
+ *
+ * Usage:
+ *   bun run example/correction.ts              # Uses default (json-patch)
+ *   bun run example/correction.ts --jq         # Uses jq method
  */
 
 import { z } from 'zod'
 import { Pipeline, createBaseState, signature, field, SignatureModule } from '../index.js'
-import type { ExecutionContext } from '../types.js'
+import type { CorrectionMethod, ExecutionContext } from '../types.js'
 
 // A signature with field names that LLMs often get wrong
 const AnalyzeIssue = signature({
@@ -31,8 +39,10 @@ IMPORTANT: Use the EXACT field names specified in the schema.`,
 })
 
 class IssueAnalyzer extends SignatureModule<typeof AnalyzeIssue> {
-  constructor() {
-    super(AnalyzeIssue)
+  constructor(method: CorrectionMethod = 'json-patch') {
+    super(AnalyzeIssue, {
+      correction: { method },
+    })
   }
 
   async forward(input: { description: string }, ctx: ExecutionContext) {
@@ -42,6 +52,9 @@ class IssueAnalyzer extends SignatureModule<typeof AnalyzeIssue> {
 }
 
 async function main() {
+  // Check for --jq flag
+  const method: CorrectionMethod = process.argv.includes('--jq') ? 'jq' : 'json-patch'
+
   const pipeline = new Pipeline(
     {
       name: 'correction-demo',
@@ -54,10 +67,11 @@ async function main() {
   )
 
   console.log('=== Auto-Correction Demo ===')
+  console.log(`Correction method: ${method}`)
   console.log('This example uses field names that LLMs often get wrong.')
   console.log('Watch the correction rounds fix schema mismatches.\n')
 
-  const result = await pipeline.run(new IssueAnalyzer(), {
+  const result = await pipeline.run(new IssueAnalyzer(method), {
     description: 'The login button does not respond when clicked on mobile devices',
   })
 

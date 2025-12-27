@@ -158,8 +158,13 @@ export interface RetryConfig {
 // Schema Correction
 // ============================================================================
 
+/** Correction method for fixing schema validation errors. */
+export type CorrectionMethod = 'json-patch' | 'jq'
+
 /** Configuration for automatic schema correction on parse failures. */
 export interface CorrectionConfig {
+  /** Correction method to use (default: 'json-patch'). */
+  method?: CorrectionMethod
   /** Use a different model for corrections (default: same model, same session). */
   model?: ModelConfig
   /** Maximum number of fields to attempt correcting per round (default: 5). */

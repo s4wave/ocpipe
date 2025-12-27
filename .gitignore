@@ -1,0 +1,6 @@
+node_modules/
+*.patch
+ckpt/
+logs/
+*.log
+.DS_Store

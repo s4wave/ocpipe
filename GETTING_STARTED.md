@@ -2,17 +2,25 @@
 
 This guide walks you through building and running a simple "Hello World" application using DSTS (Declarative Self-Improving TypeScript).
 
+**Repository:** https://github.com/s4wave/dsts
+
 ## Prerequisites
 
 - [Bun](https://bun.sh) runtime
 - [OpenCode](https://opencode.ai) CLI installed and configured
+
+## Installation
+
+```bash
+bun add dsts zod
+```
 
 ## Running the Example
 
 The `example/` directory contains a complete hello world application. Run it directly:
 
 ```bash
-bun run src/dsts/example/index.ts
+bun run example/index.ts
 ```
 
 This will:
@@ -187,15 +195,15 @@ main().catch(console.error)
 ### Step 4: Run it
 
 ```bash
-bun run src/dsts/example/index.ts
+bun run example/index.ts
 ```
 
 ## Auto-Correction Example
 
-DSTS automatically corrects schema mismatches using jq patches. Run the correction demo:
+DSTS automatically corrects schema mismatches using patches. Run the correction demo:
 
 ```bash
-bun run src/dsts/example/correction.ts
+bun run example/correction.ts
 ```
 
 This example uses field names that LLMs often get wrong:
@@ -207,8 +215,8 @@ This example uses field names that LLMs often get wrong:
 When the LLM returns incorrect field names, you'll see correction rounds:
 
 ```
->>> Correction round 1/3: fixing 2 field(s)...
-  Patches: .issue_type = .type | del(.type) | .severity = .priority | del(.priority)
+>>> Correction round 1/3 [json-patch]: fixing 2 field(s)...
+  JSON Patch: [{"op":"move","from":"/type","path":"/issue_type"},{"op":"move","from":"/priority","path":"/severity"}]
   Round 1 complete, 0 error(s) remaining
   Schema correction successful after 1 round(s)!
 ```
@@ -216,23 +224,45 @@ When the LLM returns incorrect field names, you'll see correction rounds:
 The correction system:
 1. Detects schema validation errors
 2. Finds similar field names in the response (e.g., `type` for `issue_type`)
-3. Asks the LLM for jq-style patches to fix the errors
+3. Asks the LLM for patches to fix the errors
 4. Applies patches and re-validates
 5. Retries up to 3 rounds if needed
 
-To disable auto-correction for a specific predictor:
+### Correction Methods
+
+DSTS supports two correction methods:
+
+| Method | Format | Requirements |
+|--------|--------|--------------|
+| `json-patch` (default) | RFC 6902 JSON Patch | None (pure TypeScript) |
+| `jq` | jq-style expressions | `jq` binary installed |
+
+**JSON Patch** is the default because it requires no external dependencies and uses a standardized format that LLMs are familiar with from API documentation.
+
+To use jq instead:
+
+```typescript
+super(MySignature, {
+  correction: {
+    method: 'jq',  // Use jq-style patches (requires jq binary)
+  },
+})
+```
+
+To disable auto-correction:
 
 ```typescript
 super(MySignature, { correction: false })
 ```
 
-Or configure it:
+Full configuration options:
 
 ```typescript
 super(MySignature, {
   correction: {
-    maxFields: 5,    // Max fields to fix per round
-    maxRounds: 3,    // Max correction attempts
+    method: 'json-patch', // 'json-patch' (default) or 'jq'
+    maxFields: 5,         // Max fields to fix per round
+    maxRounds: 3,         // Max correction attempts
   },
 })
 ```

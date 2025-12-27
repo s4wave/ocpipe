@@ -1,0 +1,48 @@
+{
+  "name": "dsts",
+  "version": "0.1.0",
+  "description": "Declarative Self-Improving TypeScript - A DSPy-inspired SDK for building LLM workflow pipelines with OpenCode",
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/s4wave/dsts"
+  },
+  "homepage": "https://github.com/s4wave/dsts",
+  "bugs": {
+    "url": "https://github.com/s4wave/dsts/issues"
+  },
+  "license": "MIT",
+  "author": "s4wave",
+  "keywords": [
+    "dspy",
+    "llm",
+    "opencode",
+    "typescript",
+    "ai",
+    "workflow",
+    "pipeline",
+    "bun"
+  ],
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "peerDependencies": {
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "files": [
+    "*.ts",
+    "!*.test.ts",
+    "example/"
+  ]
+}
