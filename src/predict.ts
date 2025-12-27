@@ -1,5 +1,5 @@
 /**
- * DSTS SDK Predict class.
+ * ocpipe Predict class.
  *
  * Executes a signature by generating a prompt, calling OpenCode, and parsing the response.
  */

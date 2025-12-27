@@ -1,7 +1,7 @@
 /**
  * Hello World example runner.
  *
- * Demonstrates running a DSTS module in a pipeline.
+ * Demonstrates running an ocpipe module in a pipeline.
  */
 
 import { Pipeline, createBaseState } from '../src/index.js'

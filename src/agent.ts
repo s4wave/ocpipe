@@ -1,5 +1,5 @@
 /**
- * DSTS SDK OpenCode agent integration.
+ * ocpipe OpenCode agent integration.
  *
  * Wraps the OpenCode CLI for running LLM agents with session management.
  */

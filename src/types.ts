@@ -1,7 +1,5 @@
 /**
- * DSTS SDK shared types.
- *
- * Core type definitions for the Declarative Self-Improving TypeScript SDK.
+ * ocpipe shared types.
  */
 
 import type { z } from 'zod/v4'

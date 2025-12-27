@@ -1,11 +1,11 @@
 /**
  * Auto-correction example.
  *
- * Demonstrates DSTS's automatic schema correction.
+ * Demonstrates ocpipe's automatic schema correction.
  * This example uses a schema with specific field names that LLMs
  * sometimes get wrong (e.g., "type" instead of "issue_type").
  *
- * DSTS supports two correction methods:
+ * ocpipe supports two correction methods:
  * - 'json-patch' (default): RFC 6902 JSON Patch, no external dependencies
  * - 'jq': jq-style expressions, requires jq binary installed
  *

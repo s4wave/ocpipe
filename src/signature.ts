@@ -1,5 +1,5 @@
 /**
- * DSTS SDK signature definition.
+ * ocpipe signature definition.
  *
  * Signatures declare input/output contracts for LLM interactions using Zod for validation.
  */

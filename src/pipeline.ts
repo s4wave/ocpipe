@@ -1,5 +1,5 @@
 /**
- * DSTS SDK Pipeline orchestrator.
+ * ocpipe Pipeline orchestrator.
  *
  * Manages execution context, state, checkpointing, logging, retry logic, and sub-pipelines.
  */

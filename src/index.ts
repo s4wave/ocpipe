@@ -1,7 +1,7 @@
 /**
- * DSTS: Declarative Self-Improving TypeScript
+ * ocpipe: LLM pipelines with OpenCode and Zod.
  *
- * A DSPy-inspired SDK for building LLM workflow pipelines with OpenCode.
+ * Inspired by DSPy.
  *
  * @example
  * ```typescript

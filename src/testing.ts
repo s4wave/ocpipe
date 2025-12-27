@@ -1,7 +1,7 @@
 /**
- * DSTS SDK testing utilities.
+ * ocpipe testing utilities.
  *
- * Provides mock backends and test helpers for unit testing DSTS components.
+ * Provides mock backends and test helpers for unit testing ocpipe components.
  */
 
 import type { RunAgentOptions, RunAgentResult, FieldConfig } from './types.js'

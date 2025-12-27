@@ -1,5 +1,5 @@
 /**
- * DSTS SDK response parsing.
+ * ocpipe response parsing.
  *
  * Extracts and validates LLM responses using JSON or field marker formats.
  */

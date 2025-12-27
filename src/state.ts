@@ -1,5 +1,5 @@
 /**
- * DSTS SDK state management.
+ * ocpipe state management.
  *
  * Provides base state types and helpers for checkpointable workflow state.
  */

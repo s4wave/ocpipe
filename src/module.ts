@@ -1,5 +1,5 @@
 /**
- * DSTS SDK Module base class.
+ * ocpipe Module base class.
  *
  * Modules encapsulate logical units of work that use one or more Predictors.
  */

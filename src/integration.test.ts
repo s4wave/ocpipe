@@ -1,11 +1,11 @@
 /**
- * DSTS SDK integration tests with real LLM.
+ * ocpipe integration tests with real LLM.
  *
  * These tests use the github-copilot/grok-code-fast-1 model which is free.
- * Run with: bun run test -- src/dsts/integration.test.ts
+ * Run with: bun run test -- src/integration.test.ts
  *
  * These tests are skipped by default in CI. To run locally:
- * DSTS_INTEGRATION=1 bun run test -- src/dsts/integration.test.ts
+ * OCPIPE_INTEGRATION=1 bun run test -- src/integration.test.ts
  */
 
 import { describe, it, expect, beforeAll } from 'vitest'
@@ -20,8 +20,8 @@ import { z } from 'zod/v4'
 import { mkdir, rm } from 'fs/promises'
 import { join } from 'path'
 
-// Skip these tests unless DSTS_INTEGRATION=1 is set
-const runIntegration = process.env.DSTS_INTEGRATION === '1'
+// Skip these tests unless OCPIPE_INTEGRATION=1 is set
+const runIntegration = process.env.OCPIPE_INTEGRATION === '1'
 
 // Free model for testing
 const GROK_MODEL = {
@@ -29,9 +29,9 @@ const GROK_MODEL = {
   modelID: 'grok-code-fast-1',
 }
 
-const testCheckpointDir = join(TMP_DIR, 'dsts-integration-test')
+const testCheckpointDir = join(TMP_DIR, 'ocpipe-integration-test')
 
-describe.skipIf(!runIntegration)('DSTS Integration', () => {
+describe.skipIf(!runIntegration)('ocpipe Integration', () => {
   beforeAll(async () => {
     await mkdir(testCheckpointDir, { recursive: true })
   })

@@ -15,6 +15,47 @@ This guide walks you through building and running a simple "Hello World" applica
 bun add ocpipe zod
 ```
 
+## Quick Start with REPL
+
+The fastest way to explore ocpipe is with `bun repl`:
+
+```bash
+bun repl
+```
+
+Then paste this:
+
+```typescript
+import { signature, field, module, Pipeline, createBaseState } from 'ocpipe'
+
+const Greet = signature({
+  doc: 'Generate a friendly greeting for the given name.',
+  inputs: { name: field.string('The name of the person to greet') },
+  outputs: {
+    greeting: field.string('A friendly greeting message'),
+    emoji: field.string('An appropriate emoji for the greeting'),
+  },
+})
+
+const pipeline = new Pipeline(
+  {
+    name: 'repl-demo',
+    defaultModel: { providerID: 'anthropic', modelID: 'claude-haiku-4-5' },
+    defaultAgent: 'code',
+  },
+  createBaseState,
+)
+
+const result = await pipeline.run(module(Greet), { name: 'World' })
+console.log(result.data.greeting, result.data.emoji)
+```
+
+You'll see the pipeline execute and print something like:
+
+```
+Hello, World! It's wonderful to meet you! :wave:
+```
+
 ## Running the Example
 
 The `example/` directory contains a complete hello world application. Run it directly:
@@ -49,7 +90,7 @@ Emoji: :wave:
 
 ## Understanding the Example
 
-The example has three files that demonstrate DSTS's core concepts:
+The example has three files that demonstrate ocpipe's core concepts:
 
 ### 1. Signature (`signature.ts`)
 
@@ -211,20 +252,22 @@ bun run example/index.ts
 
 ## Auto-Correction Example
 
-DSTS automatically corrects schema mismatches using patches. Run the correction demo:
+ocpipe automatically corrects schema mismatches using patches when the LLM returns incorrect field names. Run the correction demo:
 
 ```bash
 bun run example/correction.ts
 ```
 
-This example uses field names that LLMs often get wrong:
+This example uses field names that LLMs sometimes get wrong:
 
-- `issue_type` (LLMs often return `type`)
-- `severity` (LLMs often return `priority`)
-- `explanation` (LLMs often return `description` or `reason`)
-- `suggested_tags` (LLMs often return `tags`)
+- `issue_type` (LLMs may return `type`)
+- `severity` (LLMs may return `priority`)
+- `explanation` (LLMs may return `description` or `reason`)
+- `suggested_tags` (LLMs may return `tags`)
 
-When the LLM returns incorrect field names, you'll see correction rounds:
+**Note:** Modern LLMs like Claude often follow the schema correctly. The correction system is a safety net for when they don't. You may not see correction rounds if the LLM gets it right the first time.
+
+If the LLM does return incorrect field names, you'll see correction rounds:
 
 ```
 >>> Correction round 1/3 [json-patch]: fixing 2 field(s)...
@@ -235,15 +278,15 @@ When the LLM returns incorrect field names, you'll see correction rounds:
 
 The correction system:
 
-1. Detects schema validation errors
-2. Finds similar field names in the response (e.g., `type` for `issue_type`)
-3. Asks the LLM for patches to fix the errors
+1. Validates the LLM's response against the output schema
+2. If validation fails, identifies which fields have errors
+3. Asks the LLM to generate patches to fix the errors
 4. Applies patches and re-validates
 5. Retries up to 3 rounds if needed
 
 ### Correction Methods
 
-DSTS supports two correction methods:
+ocpipe supports two correction methods:
 
 | Method                 | Format               | Requirements           |
 | ---------------------- | -------------------- | ---------------------- |
@@ -284,7 +327,7 @@ super(MySignature, {
 
 ### Session Continuity
 
-By default, DSTS reuses the OpenCode session across pipeline steps. This means the LLM maintains context between calls. Use `newSession: true` in run options to start fresh:
+By default, ocpipe reuses the OpenCode session across pipeline steps. This means the LLM maintains context between calls. Use `newSession: true` in run options to start fresh:
 
 ```typescript
 await pipeline.run(module, input, { newSession: true })
@@ -292,7 +335,7 @@ await pipeline.run(module, input, { newSession: true })
 
 ### Checkpointing
 
-DSTS automatically saves state after each step to `checkpointDir`. Resume from a checkpoint:
+ocpipe automatically saves state after each step to `checkpointDir`. Resume from a checkpoint:
 
 ```typescript
 const resumed = await Pipeline.loadCheckpoint(config, sessionId)
@@ -300,7 +343,7 @@ const resumed = await Pipeline.loadCheckpoint(config, sessionId)
 
 ### Field Types
 
-DSTS provides field helpers for common types:
+ocpipe provides field helpers for common types:
 
 ```typescript
 field.string('description') // string

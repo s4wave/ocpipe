@@ -30,7 +30,7 @@ bun test
 Integration tests require OpenCode CLI and hit real LLMs:
 
 ```bash
-DSTS_INTEGRATION=1 bun test src/integration.test.ts
+OCPIPE_INTEGRATION=1 bun test src/integration.test.ts
 ```
 
 ## Project Structure
