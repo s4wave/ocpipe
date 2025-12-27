@@ -801,6 +801,19 @@ function isUnsafeKey(key: string): boolean {
   return UNSAFE_KEYS.has(key)
 }
 
+/**
+ * isSafePathSegment determines whether a JSON Pointer path segment is safe to use
+ * as a property key on an object. It rejects keys that are known to enable
+ * prototype pollution or that contain characters commonly used in special
+ * property notations.
+ */
+function isSafePathSegment(segment: string): boolean {
+  if (isUnsafeKey(segment)) return false
+  // Disallow bracket notation-style segments to avoid unexpected coercions.
+  if (segment.includes('[') || segment.includes(']')) return false
+  return true
+}
+
 /** getValueAtPath retrieves a value at a JSON Pointer path. */
 function getValueAtPath(
   obj: Record<string, unknown>,
@@ -833,8 +846,8 @@ function setValueAtPath(
   let current: unknown = obj
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i]!
-    if (isUnsafeKey(part)) {
-      // Avoid writing to dangerous prototype-related properties
+    if (!isSafePathSegment(part)) {
+      // Avoid writing to dangerous or malformed prototype-related properties
       return
     }
     if (Array.isArray(current)) {
@@ -842,22 +855,22 @@ function setValueAtPath(
       if (current[idx] === undefined) {
         // Create intermediate object or array
         const nextPart = parts[i + 1]!
-        current[idx] = /^\d+$/.test(nextPart) ? [] : {}
+        current[idx] = /^\d+$/.test(nextPart) ? [] : Object.create(null)
       }
       current = current[idx]
     } else if (typeof current === 'object' && current !== null) {
       const rec = current as Record<string, unknown>
       if (rec[part] === undefined) {
         const nextPart = parts[i + 1]!
-        rec[part] = /^\d+$/.test(nextPart) ? [] : {}
+        rec[part] = /^\d+$/.test(nextPart) ? [] : Object.create(null)
       }
       current = rec[part]
     }
   }
 
   const lastPart = parts[parts.length - 1]!
-  if (isUnsafeKey(lastPart)) {
-    // Avoid writing to dangerous prototype-related properties
+  if (!isSafePathSegment(lastPart)) {
+    // Avoid writing to dangerous or malformed prototype-related properties
     return
   }
   if (Array.isArray(current)) {
