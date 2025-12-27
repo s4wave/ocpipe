@@ -175,11 +175,12 @@ export function generateMockOutputs(
       case 'ZodObject':
         result[name] = {}
         break
-      case 'ZodEnum':
+      case 'ZodEnum': {
         // Get first enum value via options property
         const enumType = config.type as { options?: readonly string[] }
         result[name] = enumType.options?.[0] ?? 'unknown'
         break
+      }
       default:
         result[name] = null
     }

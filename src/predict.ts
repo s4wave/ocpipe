@@ -47,8 +47,13 @@ export interface PredictConfig {
   correction?: CorrectionConfig | false
 }
 
+type AnySignature = SignatureDef<
+  Record<string, FieldConfig>,
+  Record<string, FieldConfig>
+>
+
 /** Predict executes a signature by calling an LLM and parsing the response. */
-export class Predict<S extends SignatureDef<any, any>> {
+export class Predict<S extends AnySignature> {
   constructor(
     public readonly sig: S,
     public readonly config: PredictConfig = {},
@@ -239,7 +244,7 @@ export class Predict<S extends SignatureDef<any, any>> {
 
     // Input fields as JSON
     const inputsWithDescriptions: Record<string, unknown> = {}
-    for (const [name, config] of Object.entries(this.sig.inputs) as [
+    for (const [name] of Object.entries(this.sig.inputs) as [
       string,
       FieldConfig,
     ][]) {

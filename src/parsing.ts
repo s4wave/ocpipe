@@ -507,13 +507,13 @@ export function applyJqPatch(
     /\binput\b/,
     /\binputs\b/,
     /\bsystem\b/,
-    /\@base64d/,
-    /\@uri/,
-    /\@csv/,
-    /\@tsv/,
-    /\@json/,
-    /\@text/,
-    /\@sh/,
+    /@base64d/,
+    /@uri/,
+    /@csv/,
+    /@tsv/,
+    /@json/,
+    /@text/,
+    /@sh/,
     /`[^`]*`/, // Backtick string interpolation
     /\bimport\b/,
     /\binclude\b/,
@@ -532,7 +532,7 @@ export function applyJqPatch(
 
   // Only allow patches that look like field operations
   // Valid: .foo = "bar", .items[0].name = .items[0].title, del(.foo) | .bar = 1
-  const safePattern = /^[\s\w\[\]."'=|,:\-{}]*$/
+  const safePattern = /^[\s\w[\]."'=|,:\-{}]*$/
   if (!safePattern.test(patch)) {
     console.error(`  Invalid characters in patch, skipping: ${patch}`)
     return obj
