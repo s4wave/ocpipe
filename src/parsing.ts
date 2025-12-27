@@ -802,15 +802,26 @@ function isUnsafeKey(key: string): boolean {
 }
 
 /**
+ * Unescape a single JSON Pointer path segment according to RFC 6901.
+ * This ensures that checks for dangerous keys are applied to the
+ * effective property name, not the escaped form.
+ */
+function unescapeJsonPointerSegment(segment: string): string {
+  return segment.replace(/~1/g, '/').replace(/~0/g, '~')
+}
+
+/**
  * isSafePathSegment determines whether a JSON Pointer path segment is safe to use
  * as a property key on an object. It rejects keys that are known to enable
  * prototype pollution or that contain characters commonly used in special
  * property notations.
  */
 function isSafePathSegment(segment: string): boolean {
-  if (isUnsafeKey(segment)) return false
+  // Normalize the segment as it will appear as a property key.
+  const normalized = unescapeJsonPointerSegment(String(segment))
+  if (isUnsafeKey(normalized)) return false
   // Disallow bracket notation-style segments to avoid unexpected coercions.
-  if (segment.includes('[') || segment.includes(']')) return false
+  if (normalized.includes('[') || normalized.includes(']')) return false
   return true
 }
 
@@ -821,7 +832,15 @@ function getValueAtPath(
 ): unknown {
   let current: unknown = obj
   for (const part of parts) {
-    if (isUnsafeKey(part)) return undefined
+    // Block prototype-pollution: reject __proto__, constructor, prototype
+    if (
+      part === '__proto__' ||
+      part === 'constructor' ||
+      part === 'prototype'
+    ) {
+      return undefined
+    }
+    if (!isSafePathSegment(part)) return undefined
     if (current === null || current === undefined) return undefined
     if (Array.isArray(current)) {
       const idx = parseInt(part, 10)
@@ -846,6 +865,14 @@ function setValueAtPath(
   let current: unknown = obj
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i]!
+    // Block prototype-pollution: reject __proto__, constructor, prototype
+    if (
+      part === '__proto__' ||
+      part === 'constructor' ||
+      part === 'prototype'
+    ) {
+      return
+    }
     if (!isSafePathSegment(part)) {
       // Avoid writing to dangerous or malformed prototype-related properties
       return
@@ -869,6 +896,14 @@ function setValueAtPath(
   }
 
   const lastPart = parts[parts.length - 1]!
+  // Block prototype-pollution: reject __proto__, constructor, prototype
+  if (
+    lastPart === '__proto__' ||
+    lastPart === 'constructor' ||
+    lastPart === 'prototype'
+  ) {
+    return
+  }
   if (!isSafePathSegment(lastPart)) {
     // Avoid writing to dangerous or malformed prototype-related properties
     return
@@ -891,7 +926,15 @@ function removeValueAtPath(
   let current: unknown = obj
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i]!
-    if (isUnsafeKey(part)) {
+    // Block prototype-pollution: reject __proto__, constructor, prototype
+    if (
+      part === '__proto__' ||
+      part === 'constructor' ||
+      part === 'prototype'
+    ) {
+      return
+    }
+    if (!isSafePathSegment(part)) {
       // Avoid accessing dangerous prototype-related properties
       return
     }
@@ -905,8 +948,16 @@ function removeValueAtPath(
   }
 
   const lastPart = parts[parts.length - 1]!
-  if (isUnsafeKey(lastPart)) {
-    // Avoid deleting dangerous prototype-related properties
+  // Block prototype-pollution: reject __proto__, constructor, prototype
+  if (
+    lastPart === '__proto__' ||
+    lastPart === 'constructor' ||
+    lastPart === 'prototype'
+  ) {
+    return
+  }
+  if (!isSafePathSegment(lastPart)) {
+    // Avoid deleting dangerous or malformed properties
     return
   }
   if (Array.isArray(current)) {
