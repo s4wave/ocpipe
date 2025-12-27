@@ -1,8 +1,8 @@
-# Getting Started with DSTS
+# Getting Started with ocpipe
 
-This guide walks you through building and running a simple "Hello World" application using DSTS (Declarative Self-Improving TypeScript).
+This guide walks you through building and running a simple "Hello World" application using ocpipe (OpenCode Pipeline).
 
-**Repository:** https://github.com/s4wave/dsts
+**Repository:** https://github.com/s4wave/ocpipe
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@ This guide walks you through building and running a simple "Hello World" applica
 ## Installation
 
 ```bash
-bun add dsts zod
+bun add ocpipe zod
 ```
 
 ## Running the Example

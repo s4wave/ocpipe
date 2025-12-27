@@ -1,17 +1,17 @@
 {
-  "name": "dsts",
+  "name": "ocpipe",
   "version": "0.1.0",
-  "description": "Declarative Self-Improving TypeScript - A DSPy-inspired SDK for building LLM workflow pipelines with OpenCode",
+  "description": "SDK for LLM pipelines with OpenCode and Zod",
   "type": "module",
   "main": "index.ts",
   "types": "index.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/s4wave/dsts"
+    "url": "https://github.com/s4wave/ocpipe"
   },
-  "homepage": "https://github.com/s4wave/dsts",
+  "homepage": "https://github.com/s4wave/ocpipe",
   "bugs": {
-    "url": "https://github.com/s4wave/dsts/issues"
+    "url": "https://github.com/s4wave/ocpipe/issues"
   },
   "license": "MIT",
   "author": "s4wave",

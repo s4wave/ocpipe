@@ -1,12 +1,12 @@
-# DSTS
+# ocpipe
 
 <div align="center">
-  <h3>Declarative Self-Improving TypeScript</h3>
-  <p>A DSPy-inspired SDK for building LLM workflow pipelines with <a href="https://opencode.ai">OpenCode</a>.</p>
+  <h3>OpenCode Pipeline</h3>
+  <p>SDK for LLM pipelines with <a href="https://opencode.ai">OpenCode</a> and <a href="https://zod.dev">Zod</a>.</p>
   <p>
-    <a href="https://github.com/s4wave/dsts">GitHub</a> |
-    <a href="https://github.com/s4wave/dsts/blob/main/GETTING_STARTED.md">Getting Started</a> |
-    <a href="https://github.com/s4wave/dsts/blob/main/LICENSE">MIT License</a>
+    <a href="https://github.com/s4wave/ocpipe">GitHub</a> |
+    <a href="https://github.com/s4wave/ocpipe/blob/main/GETTING_STARTED.md">Getting Started</a> |
+    <a href="https://github.com/s4wave/ocpipe/blob/main/LICENSE">MIT License</a>
   </p>
 </div>
 
@@ -20,7 +20,7 @@ Signature  →  Predict  →  Module  →  Pipeline
 
 </div>
 
-DSTS separates the **what** (Signatures declare input/output contracts), the **how** (Modules compose predictors), and the **when** (Pipelines orchestrate execution). This separation enables clean composition, rich debugging, and maintainable LLM workflow code.
+ocpipe separates the **what** (Signatures declare input/output contracts), the **how** (Modules compose predictors), and the **when** (Pipelines orchestrate execution). This separation enables clean composition, rich debugging, and maintainable LLM workflow code.
 
 ## Features
 
@@ -36,7 +36,7 @@ DSTS separates the **what** (Signatures declare input/output contracts), the **h
 ## Quick Start
 
 ```typescript
-import { signature, field, SignatureModule, Pipeline, createBaseState } from 'dsts'
+import { signature, field, SignatureModule, Pipeline, createBaseState } from 'ocpipe'
 import { z } from 'zod'
 
 // 1. Define a signature (the contract)
@@ -326,9 +326,9 @@ If you need tool access, configure your OpenCode agent appropriately. The agent 
 ## Installation
 
 ```bash
-bun add dsts zod
+bun add ocpipe zod
 ```
 
 ## License
 
-MIT - see [LICENSE](https://github.com/s4wave/dsts/blob/main/LICENSE) for details.
+MIT - see [LICENSE](https://github.com/s4wave/ocpipe/blob/main/LICENSE) for details.
