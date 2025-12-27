@@ -55,6 +55,11 @@
   "files": [
     "src/",
     "!src/*.test.ts",
-    "example/"
+    "example/",
+    "llms.txt",
+    "README.md",
+    "LICENSE",
+    "GETTING_STARTED.md",
+    "DESIGN.md"
   ]
 }
