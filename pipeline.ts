@@ -4,7 +4,7 @@
  * Manages execution context, state, checkpointing, logging, retry logic, and sub-pipelines.
  */
 
-import { writeFile, readFile, readdir } from 'fs/promises'
+import { writeFile, readFile, readdir, mkdir } from 'fs/promises'
 import type { Module } from './module.js'
 import type {
   BaseState,
@@ -165,6 +165,7 @@ export class Pipeline<S extends BaseState> {
 
   /** saveCheckpoint persists the current state to disk. */
   async saveCheckpoint(): Promise<void> {
+    await mkdir(this.config.checkpointDir, { recursive: true })
     const path = `${this.config.checkpointDir}/${this.config.name}_${this.state.sessionId}.json`
     await writeFile(path, JSON.stringify(this.state, null, 2))
   }

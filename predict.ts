@@ -196,16 +196,18 @@ export class Predict<S extends SignatureDef<any, any>> {
     lines.push(this.sig.doc)
     lines.push('')
 
-    // Input fields
-    lines.push('INPUTS:')
+    // Input fields as JSON
+    const inputsWithDescriptions: Record<string, unknown> = {}
     for (const [name, config] of Object.entries(this.sig.inputs) as [
       string,
       FieldConfig,
     ][]) {
-      const value = inputs[name]
-      const desc = config.desc
-      lines.push(`- ${name}${desc ? ` (${desc})` : ''}: ${JSON.stringify(value)}`)
+      inputsWithDescriptions[name] = inputs[name]
     }
+    lines.push('INPUTS:')
+    lines.push('```json')
+    lines.push(JSON.stringify(inputsWithDescriptions, null, 2))
+    lines.push('```')
     lines.push('')
 
     // Output format with JSON Schema
