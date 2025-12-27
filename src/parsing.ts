@@ -648,44 +648,63 @@ export function buildBatchJsonPatchPrompt(
   return lines.join('\n')
 }
 
+/**
+ * extractBalancedArray extracts a balanced JSON array from a string starting at startIdx.
+ * Returns the array substring or null if not found/unbalanced.
+ */
+function extractBalancedArray(text: string, startIdx: number): string | null {
+  if (startIdx === -1 || startIdx >= text.length) return null
+
+  let bracketCount = 0
+  let endIdx = startIdx
+  for (let i = startIdx; i < text.length; i++) {
+    if (text[i] === '[') bracketCount++
+    else if (text[i] === ']') {
+      bracketCount--
+      if (bracketCount === 0) {
+        endIdx = i + 1
+        break
+      }
+    }
+  }
+
+  if (endIdx > startIdx && bracketCount === 0) {
+    return text.slice(startIdx, endIdx)
+  }
+  return null
+}
+
 /** extractJsonPatch extracts a JSON Patch array from an LLM response. */
 export function extractJsonPatch(response: string): JsonPatchOperation[] {
   // Try to find JSON array in code blocks first
-  const codeBlockMatch = response.match(
-    /```(?:json)?\s*(\[[\s\S]*?\])[\s\S]*?```/,
-  )
-  if (codeBlockMatch?.[1]) {
-    try {
-      return JSON.parse(codeBlockMatch[1]) as JsonPatchOperation[]
-    } catch {
-      // Continue to try other methods
+  // Use indexOf to find code block boundaries to avoid ReDoS vulnerabilities
+  const codeBlockStart = response.indexOf('```')
+  if (codeBlockStart !== -1) {
+    const codeBlockEnd = response.indexOf('```', codeBlockStart + 3)
+    if (codeBlockEnd !== -1) {
+      const codeBlockContent = response.slice(codeBlockStart + 3, codeBlockEnd)
+      // Skip optional "json" language identifier and whitespace
+      const arrayStart = codeBlockContent.indexOf('[')
+      if (arrayStart !== -1) {
+        const arrayJson = extractBalancedArray(codeBlockContent, arrayStart)
+        if (arrayJson) {
+          try {
+            return JSON.parse(arrayJson) as JsonPatchOperation[]
+          } catch {
+            // Continue to try other methods
+          }
+        }
+      }
     }
   }
 
   // Try to find raw JSON array by counting brackets
-  const startIdx = response.indexOf('[')
-  if (startIdx !== -1) {
-    let bracketCount = 0
-    let endIdx = startIdx
-    for (let i = startIdx; i < response.length; i++) {
-      if (response[i] === '[') bracketCount++
-      else if (response[i] === ']') {
-        bracketCount--
-        if (bracketCount === 0) {
-          endIdx = i + 1
-          break
-        }
-      }
-    }
-
-    if (endIdx > startIdx) {
-      try {
-        return JSON.parse(
-          response.slice(startIdx, endIdx),
-        ) as JsonPatchOperation[]
-      } catch {
-        // Fall through to empty array
-      }
+  const arrayJson = extractBalancedArray(response, response.indexOf('['))
+  if (arrayJson) {
+    try {
+      return JSON.parse(arrayJson) as JsonPatchOperation[]
+    } catch {
+      // Fall through to empty array
     }
   }
 
@@ -775,6 +794,13 @@ export function applyJsonPatch(
   return result
 }
 
+/** Keys that could be used for prototype pollution attacks. */
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
+function isUnsafeKey(key: string): boolean {
+  return UNSAFE_KEYS.has(key)
+}
+
 /** getValueAtPath retrieves a value at a JSON Pointer path. */
 function getValueAtPath(
   obj: Record<string, unknown>,
@@ -782,6 +808,7 @@ function getValueAtPath(
 ): unknown {
   let current: unknown = obj
   for (const part of parts) {
+    if (isUnsafeKey(part)) return undefined
     if (current === null || current === undefined) return undefined
     if (Array.isArray(current)) {
       const idx = parseInt(part, 10)
@@ -806,6 +833,10 @@ function setValueAtPath(
   let current: unknown = obj
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i]!
+    if (isUnsafeKey(part)) {
+      // Avoid writing to dangerous prototype-related properties
+      return
+    }
     if (Array.isArray(current)) {
       const idx = parseInt(part, 10)
       if (current[idx] === undefined) {
@@ -825,6 +856,10 @@ function setValueAtPath(
   }
 
   const lastPart = parts[parts.length - 1]!
+  if (isUnsafeKey(lastPart)) {
+    // Avoid writing to dangerous prototype-related properties
+    return
+  }
   if (Array.isArray(current)) {
     const idx = parseInt(lastPart, 10)
     current[idx] = value
@@ -843,6 +878,10 @@ function removeValueAtPath(
   let current: unknown = obj
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i]!
+    if (isUnsafeKey(part)) {
+      // Avoid accessing dangerous prototype-related properties
+      return
+    }
     if (Array.isArray(current)) {
       current = current[parseInt(part, 10)]
     } else if (typeof current === 'object' && current !== null) {
@@ -853,6 +892,10 @@ function removeValueAtPath(
   }
 
   const lastPart = parts[parts.length - 1]!
+  if (isUnsafeKey(lastPart)) {
+    // Avoid deleting dangerous prototype-related properties
+    return
+  }
   if (Array.isArray(current)) {
     const idx = parseInt(lastPart, 10)
     current.splice(idx, 1)
