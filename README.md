@@ -1,5 +1,3 @@
-# ocpipe
-
 <div align="center">
   <h3>OpenCode Pipeline</h3>
   <p>SDK for LLM pipelines with <a href="https://opencode.ai">OpenCode</a> and <a href="https://zod.dev">Zod</a>.</p>
