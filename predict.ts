@@ -4,6 +4,7 @@
  * Executes a signature by generating a prompt, calling OpenCode, and parsing the response.
  */
 
+import { z } from 'zod'
 import type {
   CorrectionConfig,
   ExecutionContext,
@@ -22,7 +23,6 @@ import {
   buildBatchPatchPrompt,
   extractPatch,
   applyJqPatch,
-  zodTypeToString,
   SchemaValidationError,
 } from './parsing.js'
 
@@ -208,24 +208,44 @@ export class Predict<S extends SignatureDef<any, any>> {
     }
     lines.push('')
 
-    // Output format with explicit schema
+    // Output format with JSON Schema
     lines.push('OUTPUT FORMAT:')
-    lines.push('Return a JSON object with EXACTLY these field names and types.')
+    lines.push('Return a JSON object matching this schema EXACTLY.')
     lines.push('IMPORTANT: For optional fields, OMIT the field entirely - do NOT use null.')
     lines.push('')
     lines.push('```json')
-    lines.push('{')
-    const entries = Object.entries(this.sig.outputs) as [string, FieldConfig][]
-    for (let i = 0; i < entries.length; i++) {
-      const [name, config] = entries[i]!
-      const typeStr = zodTypeToString(config.type)
-      const desc = config.desc ? ` // ${config.desc}` : ''
-      const comma = i < entries.length - 1 ? ',' : ''
-      lines.push(`  "${name}": <${typeStr}>${comma}${desc}`)
-    }
-    lines.push('}')
+    lines.push(JSON.stringify(this.buildOutputJsonSchema(), null, 2))
     lines.push('```')
 
     return lines.join('\n')
+  }
+
+  /** buildOutputJsonSchema creates a JSON Schema from the output field definitions. */
+  private buildOutputJsonSchema(): Record<string, unknown> {
+    // Build a Zod object from the output fields
+    const shape: Record<string, z.ZodType> = {}
+    for (const [name, config] of Object.entries(this.sig.outputs) as [string, FieldConfig][]) {
+      shape[name] = config.type
+    }
+    const outputSchema = z.object(shape)
+
+    // Convert to JSON Schema
+    const jsonSchema = z.toJSONSchema(outputSchema)
+
+    // Add field descriptions from our config (toJSONSchema uses .describe() metadata)
+    // Since our FieldConfig has a separate desc field, merge it in
+    const props = jsonSchema.properties as Record<string, Record<string, unknown>> | undefined
+    if (props) {
+      for (const [name, config] of Object.entries(this.sig.outputs) as [string, FieldConfig][]) {
+        if (config.desc && props[name]) {
+          // Only add if not already set by .describe()
+          if (!props[name].description) {
+            props[name].description = config.desc
+          }
+        }
+      }
+    }
+
+    return jsonSchema
   }
 }
