@@ -1,5 +1,5 @@
 {
-  "name": "@s4wave/ocpipe",
+  "name": "ocpipe",
   "version": "0.2.1",
   "description": "SDK for LLM pipelines with OpenCode and Zod",
   "type": "module",
@@ -7,7 +7,7 @@
   "types": "src/index.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/s4wave/ocpipe"
+    "url": "git+https://github.com/s4wave/ocpipe.git"
   },
   "homepage": "https://github.com/s4wave/ocpipe",
   "bugs": {
@@ -15,9 +15,6 @@
   },
   "license": "MIT",
   "author": "s4wave",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "keywords": [
     "dspy",
     "llm",
