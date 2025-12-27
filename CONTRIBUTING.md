@@ -30,12 +30,13 @@ bun test
 Integration tests require OpenCode CLI and hit real LLMs:
 
 ```bash
-DSTS_INTEGRATION=1 bun test integration.test.ts
+DSTS_INTEGRATION=1 bun test src/integration.test.ts
 ```
 
 ## Project Structure
 
 ```
+src/
 ├── index.ts          # Main exports
 ├── signature.ts      # Signature and field definitions
 ├── predict.ts        # Predict class
@@ -46,8 +47,12 @@ DSTS_INTEGRATION=1 bun test integration.test.ts
 ├── types.ts          # TypeScript types
 ├── agent.ts          # OpenCode agent integration
 ├── testing.ts        # Test utilities
-├── paths.ts          # Path constants
-└── example/          # Example application
+└── paths.ts          # Path constants
+example/
+├── index.ts          # Hello world example
+├── signature.ts      # Example signature
+├── module.ts         # Example module
+└── correction.ts     # Auto-correction demo
 ```
 
 ## Pull Requests
