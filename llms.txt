@@ -1,0 +1,200 @@
+# ocpipe
+
+> ocpipe is a TypeScript library for building type-safe LLM pipelines with OpenCode and Zod. Inspired by DSPy, it provides modular, checkpointable workflows with automatic schema correction.
+
+Important notes:
+
+- Requires Bun runtime and OpenCode CLI installed and configured
+- Uses Zod v4 for schema validation
+- Unlike DSPy, does NOT provide ChainOfThought or ReAct - OpenCode agents already handle reasoning and tool access
+- Session continuity is maintained by default across pipeline steps
+
+## Core Concepts
+
+ocpipe separates concerns into three layers:
+- **Signatures**: Declare input/output contracts (the "what")
+- **Modules**: Compose predictors with execution logic (the "how")
+- **Pipelines**: Orchestrate execution with checkpointing and retries (the "when")
+
+## Quick Start
+
+```bash
+bun add ocpipe zod
+```
+
+```typescript
+import { signature, field, module, Pipeline, createBaseState } from 'ocpipe'
+
+const Greet = signature({
+  doc: 'Generate a friendly greeting for the given name.',
+  inputs: { name: field.string('The name of the person to greet') },
+  outputs: { greeting: field.string('A friendly greeting message') },
+})
+
+const pipeline = new Pipeline(
+  {
+    name: 'hello-world',
+    defaultModel: { providerID: 'anthropic', modelID: 'claude-haiku-4-5' },
+    defaultAgent: 'code',
+    checkpointDir: './ckpt',
+    logDir: './logs',
+  },
+  createBaseState,
+)
+
+const result = await pipeline.run(module(Greet), { name: 'World' })
+console.log(result.data.greeting)
+```
+
+## Field Helpers
+
+- `field.string(desc?)` - String field
+- `field.number(desc?)` - Number field
+- `field.boolean(desc?)` - Boolean field
+- `field.array(itemType, desc?)` - Array with Zod item type
+- `field.object(shape, desc?)` - Object with Zod shape
+- `field.enum(values, desc?)` - Enum from const array
+- `field.optional(field)` - Optional wrapper
+- `field.nullable(field)` - Nullable wrapper
+- `field.custom(zodType, desc?)` - Custom Zod type
+
+## Docs
+
+- [Getting Started](https://github.com/s4wave/ocpipe/blob/master/GETTING_STARTED.md): Tutorial with examples for building hello world and extending with multiple modules
+- [Design](https://github.com/s4wave/ocpipe/blob/master/DESIGN.md): Architecture, core concepts, and advanced patterns
+- [README](https://github.com/s4wave/ocpipe/blob/master/README.md): Quick start and feature overview
+
+## Source Files
+
+- [src/index.ts](https://github.com/s4wave/ocpipe/blob/master/src/index.ts): Main exports - signature, field, module, Pipeline, Predict, state helpers, parsing utilities
+- [src/signature.ts](https://github.com/s4wave/ocpipe/blob/master/src/signature.ts): Signature definition and field helpers using Zod
+- [src/module.ts](https://github.com/s4wave/ocpipe/blob/master/src/module.ts): Module, SignatureModule, and simple module() factory
+- [src/pipeline.ts](https://github.com/s4wave/ocpipe/blob/master/src/pipeline.ts): Pipeline orchestrator with checkpointing, retries, and sub-pipelines
+- [src/predict.ts](https://github.com/s4wave/ocpipe/blob/master/src/predict.ts): Predict class - prompt generation, LLM execution, response parsing, auto-correction
+- [src/types.ts](https://github.com/s4wave/ocpipe/blob/master/src/types.ts): TypeScript interfaces - ModelConfig, ExecutionContext, SignatureDef, PipelineConfig, etc.
+- [src/agent.ts](https://github.com/s4wave/ocpipe/blob/master/src/agent.ts): OpenCode CLI integration - runAgent(), session management
+- [src/parsing.ts](https://github.com/s4wave/ocpipe/blob/master/src/parsing.ts): JSON extraction, Zod validation, JSON Patch and jq-style correction
+- [src/state.ts](https://github.com/s4wave/ocpipe/blob/master/src/state.ts): State management - createBaseState(), createSessionId(), extendBaseState()
+- [src/testing.ts](https://github.com/s4wave/ocpipe/blob/master/src/testing.ts): MockAgentBackend, createMockContext(), generateMockOutputs() for unit testing
+
+## Examples
+
+- [example/index.ts](https://github.com/s4wave/ocpipe/blob/master/example/index.ts): Hello world pipeline runner
+- [example/signature.ts](https://github.com/s4wave/ocpipe/blob/master/example/signature.ts): Greet signature definition
+- [example/module.ts](https://github.com/s4wave/ocpipe/blob/master/example/module.ts): Greeter SignatureModule implementation
+- [example/correction.ts](https://github.com/s4wave/ocpipe/blob/master/example/correction.ts): Auto-correction demonstration
+
+## Key Types
+
+```typescript
+interface PipelineConfig {
+  name: string
+  defaultModel: { providerID: string; modelID: string }
+  defaultAgent: string
+  checkpointDir: string
+  logDir: string
+  retry?: { maxAttempts: number; onParseError?: boolean }
+  timeoutSec?: number
+}
+
+interface SignatureDef<I, O> {
+  doc: string      // Instructions for the LLM
+  inputs: I        // Record<string, FieldConfig>
+  outputs: O       // Record<string, FieldConfig>
+}
+
+interface FieldConfig<T extends z.ZodType = z.ZodType> {
+  type: T          // Zod type for validation
+  desc?: string    // Description for prompt generation
+}
+```
+
+## Patterns
+
+### Simple Module (one signature)
+```typescript
+const result = await pipeline.run(module(MySignature), inputs)
+```
+
+### Custom Module Class
+```typescript
+class MyModule extends SignatureModule<typeof MySignature> {
+  constructor() { super(MySignature) }
+  async forward(input, ctx) {
+    const result = await this.predictor.execute(input, ctx)
+    return result.data
+  }
+}
+```
+
+### Multi-Predictor Module
+```typescript
+class ComplexModule extends Module<InputType, OutputType> {
+  private step1 = this.predict(Signature1)
+  private step2 = this.predict(Signature2, { agent: 'specialist' })
+  
+  async forward(input, ctx) {
+    const r1 = await this.step1.execute(input, ctx)
+    const r2 = await this.step2.execute({ data: r1.data }, ctx)
+    return { result: r2.data.output, metadata: r1.data }
+  }
+}
+```
+
+### Session Control
+```typescript
+// New session for this step
+await pipeline.run(module, input, { newSession: true })
+
+// Model override for this step
+await pipeline.run(module, input, { 
+  model: { providerID: 'anthropic', modelID: 'claude-opus-4-5' } 
+})
+```
+
+### Checkpointing
+```typescript
+// Resume from checkpoint
+const resumed = await Pipeline.loadCheckpoint(config, sessionId)
+
+// List available checkpoints
+const files = await Pipeline.listCheckpoints(config)
+```
+
+### Auto-Correction Configuration
+```typescript
+// Default: json-patch with 3 rounds
+super(MySignature)
+
+// Custom configuration
+super(MySignature, {
+  correction: {
+    method: 'json-patch',  // or 'jq' (requires jq binary)
+    maxFields: 5,
+    maxRounds: 3,
+  }
+})
+
+// Disable correction
+super(MySignature, { correction: false })
+```
+
+### Testing Without LLM
+```typescript
+import { MockAgentBackend, createMockContext } from 'ocpipe'
+import { vi } from 'vitest'
+
+const mock = new MockAgentBackend()
+mock.addJsonResponse({ greeting: 'Hello!', emoji: ':wave:' })
+
+vi.mock('./agent.js', () => ({ runAgent: mock.createRunner() }))
+
+const ctx = createMockContext()
+const result = await predictor.execute({ name: 'Test' }, ctx)
+```
+
+## Optional
+
+- [CONTRIBUTING.md](https://github.com/s4wave/ocpipe/blob/master/CONTRIBUTING.md): Development setup and contribution guidelines
+- [src/integration.test.ts](https://github.com/s4wave/ocpipe/blob/master/src/integration.test.ts): Integration tests showing real usage patterns
+- [src/parsing.test.ts](https://github.com/s4wave/ocpipe/blob/master/src/parsing.test.ts): Tests for JSON parsing and correction logic
