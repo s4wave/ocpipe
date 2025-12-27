@@ -34,7 +34,10 @@ export class MockAgentBackend {
   }
 
   /** addJsonResponse adds a mock JSON response. */
-  addJsonResponse(data: Record<string, unknown>, options?: Partial<MockResponse>): this {
+  addJsonResponse(
+    data: Record<string, unknown>,
+    options?: Partial<MockResponse>,
+  ): this {
     return this.addResponse({
       response: JSON.stringify(data, null, 2),
       ...options,
@@ -76,7 +79,7 @@ export class MockAgentBackend {
     for (let i = 0; i < this.responses.length; i++) {
       const r = this.responses[i]
       if (!r) continue
-      
+
       if (!r.match) {
         response = r
         responseIndex = i
@@ -116,7 +119,8 @@ export class MockAgentBackend {
 
     return {
       text: response.response ?? '',
-      sessionId: response.sessionId ?? options.sessionId ?? this.defaultSessionId,
+      sessionId:
+        response.sessionId ?? options.sessionId ?? this.defaultSessionId,
     }
   }
 
@@ -127,12 +131,14 @@ export class MockAgentBackend {
 }
 
 /** createMockContext creates a test execution context. */
-export function createMockContext(overrides?: Partial<{
-  sessionId: string
-  defaultModel: { providerID: string; modelID: string }
-  defaultAgent: string
-  timeoutSec: number
-}>) {
+export function createMockContext(
+  overrides?: Partial<{
+    sessionId: string
+    defaultModel: { providerID: string; modelID: string }
+    defaultAgent: string
+    timeoutSec: number
+  }>,
+) {
   return {
     sessionId: overrides?.sessionId,
     defaultModel: overrides?.defaultModel ?? {
@@ -145,12 +151,14 @@ export function createMockContext(overrides?: Partial<{
 }
 
 /** generateMockOutputs creates mock output data based on a schema. */
-export function generateMockOutputs(schema: Record<string, FieldConfig>): Record<string, unknown> {
+export function generateMockOutputs(
+  schema: Record<string, FieldConfig>,
+): Record<string, unknown> {
   const result: Record<string, unknown> = {}
   for (const [name, config] of Object.entries(schema)) {
     // Use constructor name for type detection (works across zod versions)
     const typeName = config.type.constructor.name
-    
+
     switch (typeName) {
       case 'ZodString':
         result[name] = `mock_${name}`

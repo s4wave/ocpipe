@@ -37,7 +37,10 @@ Done!`
       data: field.object({ value: z.number() }),
     }
     const response = `{"data": {"value": 123}}`
-    const result = parseJson<{ data: { value: number } }>(response, nestedSchema)
+    const result = parseJson<{ data: { value: number } }>(
+      response,
+      nestedSchema,
+    )
     expect(result).toEqual({ data: { value: 123 } })
   })
 

@@ -58,7 +58,8 @@ export class Pipeline<S extends BaseState> {
 
     const startTime = Date.now()
     let lastError: Error | undefined
-    const retryConfig = options?.retry ?? this.config.retry ?? { maxAttempts: 1 }
+    const retryConfig = options?.retry ??
+      this.config.retry ?? { maxAttempts: 1 }
 
     for (let attempt = 1; attempt <= retryConfig.maxAttempts; attempt++) {
       try {
@@ -176,7 +177,7 @@ export class Pipeline<S extends BaseState> {
     sessionId: string,
   ): Promise<Pipeline<S> | null> {
     const path = `${config.checkpointDir}/${config.name}_${sessionId}.json`
-    
+
     try {
       const content = await readFile(path, 'utf-8')
       const state = JSON.parse(content) as S

@@ -90,7 +90,11 @@ export class Predict<S extends SignatureDef<any, any>> {
     }
 
     // Parsing failed - attempt correction if enabled
-    if (this.config.correction !== false && parseResult.errors && parseResult.json) {
+    if (
+      this.config.correction !== false &&
+      parseResult.errors &&
+      parseResult.json
+    ) {
       const corrected = await this.correctFields(
         parseResult.json,
         parseResult.errors,
@@ -111,9 +115,19 @@ export class Predict<S extends SignatureDef<any, any>> {
 
     // Correction failed or disabled - throw SchemaValidationError (non-retryable)
     const errors = parseResult.errors ?? []
-    const errorMessages = errors.map((e) => `${e.path}: ${e.message}`).join('; ') || 'Unknown error'
-    const correctionAttempts = this.config.correction !== false ? (typeof this.config.correction === 'object' ? this.config.correction.maxRounds ?? 3 : 3) : 0
-    throw new SchemaValidationError(`Schema validation failed: ${errorMessages}`, errors, correctionAttempts)
+    const errorMessages =
+      errors.map((e) => `${e.path}: ${e.message}`).join('; ') || 'Unknown error'
+    const correctionAttempts =
+      this.config.correction !== false ?
+        typeof this.config.correction === 'object' ?
+          (this.config.correction.maxRounds ?? 3)
+        : 3
+      : 0
+    throw new SchemaValidationError(
+      `Schema validation failed: ${errorMessages}`,
+      errors,
+      correctionAttempts,
+    )
   }
 
   /** correctFields attempts to fix field errors using same-session patches with retries. */
@@ -123,32 +137,39 @@ export class Predict<S extends SignatureDef<any, any>> {
     ctx: ExecutionContext,
     sessionId: string,
   ): Promise<InferOutputs<S> | null> {
-    const correctionConfig = typeof this.config.correction === 'object' ? this.config.correction : {}
+    const correctionConfig =
+      typeof this.config.correction === 'object' ? this.config.correction : {}
     const method: CorrectionMethod = correctionConfig.method ?? 'json-patch'
     const maxFields = correctionConfig.maxFields ?? 5
     const maxRounds = correctionConfig.maxRounds ?? 3
     const correctionModel = correctionConfig.model
 
-    let currentJson = JSON.parse(JSON.stringify(json)) as Record<string, unknown>
+    let currentJson = JSON.parse(JSON.stringify(json)) as Record<
+      string,
+      unknown
+    >
     let currentErrors = initialErrors
 
     for (let round = 1; round <= maxRounds; round++) {
       const errorsToFix = currentErrors.slice(0, maxFields)
-      
+
       if (errorsToFix.length === 0) {
         break
       }
 
-      console.error(`\n>>> Correction round ${round}/${maxRounds} [${method}]: fixing ${errorsToFix.length} field(s)...`)
+      console.error(
+        `\n>>> Correction round ${round}/${maxRounds} [${method}]: fixing ${errorsToFix.length} field(s)...`,
+      )
 
       // Build prompt based on correction method
-      const patchPrompt = method === 'jq'
-        ? (errorsToFix.length === 1
-            ? buildPatchPrompt(errorsToFix[0]!, currentJson, this.sig.outputs)
-            : buildBatchPatchPrompt(errorsToFix, currentJson))
-        : (errorsToFix.length === 1
-            ? buildJsonPatchPrompt(errorsToFix[0]!, currentJson, this.sig.outputs)
-            : buildBatchJsonPatchPrompt(errorsToFix, currentJson))
+      const patchPrompt =
+        method === 'jq' ?
+          errorsToFix.length === 1 ?
+            buildPatchPrompt(errorsToFix[0]!, currentJson, this.sig.outputs)
+          : buildBatchPatchPrompt(errorsToFix, currentJson)
+        : errorsToFix.length === 1 ?
+          buildJsonPatchPrompt(errorsToFix[0]!, currentJson, this.sig.outputs)
+        : buildBatchJsonPatchPrompt(errorsToFix, currentJson)
 
       // Use same session (model has context) unless correction model specified
       const patchResult = await runAgent({
@@ -183,14 +204,16 @@ export class Predict<S extends SignatureDef<any, any>> {
 
       // Update errors for next round
       currentErrors = revalidated.errors ?? []
-      
+
       if (currentErrors.length === 0) {
         // No errors but also no data? Shouldn't happen, but handle gracefully
         console.error(`  Unexpected state: no errors but validation failed`)
         break
       }
 
-      console.error(`  Round ${round} complete, ${currentErrors.length} error(s) remaining`)
+      console.error(
+        `  Round ${round} complete, ${currentErrors.length} error(s) remaining`,
+      )
     }
 
     console.error(`  Schema correction failed after ${maxRounds} rounds`)
@@ -231,7 +254,9 @@ export class Predict<S extends SignatureDef<any, any>> {
     // Output format with JSON Schema
     lines.push('OUTPUT FORMAT:')
     lines.push('Return a JSON object matching this schema EXACTLY.')
-    lines.push('IMPORTANT: For optional fields, OMIT the field entirely - do NOT use null.')
+    lines.push(
+      'IMPORTANT: For optional fields, OMIT the field entirely - do NOT use null.',
+    )
     lines.push('')
     lines.push('```json')
     lines.push(JSON.stringify(this.buildOutputJsonSchema(), null, 2))
@@ -244,7 +269,10 @@ export class Predict<S extends SignatureDef<any, any>> {
   private buildOutputJsonSchema(): Record<string, unknown> {
     // Build a Zod object from the output fields
     const shape: Record<string, z.ZodType> = {}
-    for (const [name, config] of Object.entries(this.sig.outputs) as [string, FieldConfig][]) {
+    for (const [name, config] of Object.entries(this.sig.outputs) as [
+      string,
+      FieldConfig,
+    ][]) {
       shape[name] = config.type
     }
     const outputSchema = z.object(shape)
@@ -254,9 +282,14 @@ export class Predict<S extends SignatureDef<any, any>> {
 
     // Add field descriptions from our config (toJSONSchema uses .describe() metadata)
     // Since our FieldConfig has a separate desc field, merge it in
-    const props = jsonSchema.properties as Record<string, Record<string, unknown>> | undefined
+    const props = jsonSchema.properties as
+      | Record<string, Record<string, unknown>>
+      | undefined
     if (props) {
-      for (const [name, config] of Object.entries(this.sig.outputs) as [string, FieldConfig][]) {
+      for (const [name, config] of Object.entries(this.sig.outputs) as [
+        string,
+        FieldConfig,
+      ][]) {
         if (config.desc && props[name]) {
           // Only add if not already set by .describe()
           if (!props[name].description) {

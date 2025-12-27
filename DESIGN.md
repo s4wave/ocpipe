@@ -19,11 +19,14 @@ const AnalyzeCode = signature({
     language: field.enum(['typescript', 'python', 'rust'] as const),
   },
   outputs: {
-    issues: field.array(z.object({
-      severity: z.enum(['error', 'warning', 'info']),
-      message: z.string(),
-      line: z.number(),
-    }), 'List of issues found'),
+    issues: field.array(
+      z.object({
+        severity: z.enum(['error', 'warning', 'info']),
+        message: z.string(),
+        line: z.number(),
+      }),
+      'List of issues found',
+    ),
     suggestions: field.array(z.string(), 'Improvement suggestions'),
     score: field.number('Code quality score 0-100'),
   },
@@ -31,6 +34,7 @@ const AnalyzeCode = signature({
 ```
 
 **Field helpers:**
+
 - `field.string(desc?)` - String field
 - `field.number(desc?)` - Number field
 - `field.boolean(desc?)` - Boolean field
@@ -49,7 +53,10 @@ const AnalyzeCode = signature({
 import { Predict } from 'ocpipe'
 
 const predict = new Predict(AnalyzeCode)
-const result = await predict.execute({ code: '...', language: 'typescript' }, ctx)
+const result = await predict.execute(
+  { code: '...', language: 'typescript' },
+  ctx,
+)
 
 // With configuration
 const predict = new Predict(AnalyzeCode, {
@@ -95,13 +102,16 @@ class CodeAnalyzer extends Module<
 
   async forward(input, ctx) {
     const analysis = await this.analyze.execute(input, ctx)
-    
-    if (analysis.data.issues.some(i => i.severity === 'error')) {
-      const fixes = await this.suggest.execute({
-        code: input.code,
-        issues: analysis.data.issues,
-      }, ctx)
-      
+
+    if (analysis.data.issues.some((i) => i.severity === 'error')) {
+      const fixes = await this.suggest.execute(
+        {
+          code: input.code,
+          issues: analysis.data.issues,
+        },
+        ctx,
+      )
+
       return {
         issues: analysis.data.issues,
         fixes: fixes.data.suggestions,
@@ -124,15 +134,18 @@ Pipeline orchestrates execution with session management, checkpointing, logging,
 ```typescript
 import { Pipeline, createBaseState } from 'ocpipe'
 
-const pipeline = new Pipeline({
-  name: 'code-review',
-  defaultModel: { providerID: 'anthropic', modelID: 'claude-sonnet-4-5' },
-  defaultAgent: 'general',
-  checkpointDir: './ckpt',
-  logDir: './logs',
-  retry: { maxAttempts: 2, onParseError: true },
-  timeoutSec: 300,
-}, createBaseState)
+const pipeline = new Pipeline(
+  {
+    name: 'code-review',
+    defaultModel: { providerID: 'anthropic', modelID: 'claude-sonnet-4-5' },
+    defaultAgent: 'general',
+    checkpointDir: './ckpt',
+    logDir: './logs',
+    retry: { maxAttempts: 2, onParseError: true },
+    timeoutSec: 300,
+  },
+  createBaseState,
+)
 
 // Run modules
 const result = await pipeline.run(new CodeAnalyzer(), {
@@ -187,7 +200,7 @@ Automatically corrects LLM schema mismatches using JSON Patch (RFC 6902):
 ```typescript
 super(MySignature, {
   correction: {
-    method: 'json-patch',  // or 'jq'
+    method: 'json-patch', // or 'jq'
     maxFields: 5,
     maxRounds: 3,
   },
@@ -195,6 +208,7 @@ super(MySignature, {
 ```
 
 The correction system:
+
 1. Detects schema validation errors
 2. Finds similar field names in the response
 3. Asks the LLM for patches to fix errors
@@ -206,7 +220,11 @@ The correction system:
 Mock backends for unit testing without real LLM calls:
 
 ```typescript
-import { MockAgentBackend, createMockContext, generateMockOutputs } from 'ocpipe'
+import {
+  MockAgentBackend,
+  createMockContext,
+  generateMockOutputs,
+} from 'ocpipe'
 import { vi } from 'vitest'
 
 const mock = new MockAgentBackend()

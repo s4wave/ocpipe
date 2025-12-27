@@ -15,7 +15,13 @@
  */
 
 import { z } from 'zod/v4'
-import { Pipeline, createBaseState, signature, field, SignatureModule } from '../src/index.js'
+import {
+  Pipeline,
+  createBaseState,
+  signature,
+  field,
+  SignatureModule,
+} from '../src/index.js'
 import type { CorrectionMethod, ExecutionContext } from '../src/types.js'
 
 // A signature with field names that LLMs often get wrong
@@ -28,9 +34,15 @@ IMPORTANT: Use the EXACT field names specified in the schema.`,
   },
   outputs: {
     // LLMs often return "type" instead of "issue_type"
-    issue_type: field.enum(['bug', 'feature', 'refactor', 'docs'] as const, 'Category of the issue'),
+    issue_type: field.enum(
+      ['bug', 'feature', 'refactor', 'docs'] as const,
+      'Category of the issue',
+    ),
     // LLMs often return "priority" instead of "severity"
-    severity: field.enum(['low', 'medium', 'high', 'critical'] as const, 'How severe is the issue'),
+    severity: field.enum(
+      ['low', 'medium', 'high', 'critical'] as const,
+      'How severe is the issue',
+    ),
     // LLMs often return "description" or "reason" instead of "explanation"
     explanation: field.string('Detailed explanation of the issue'),
     // LLMs often return just "tags" or "labels"
@@ -53,7 +65,8 @@ class IssueAnalyzer extends SignatureModule<typeof AnalyzeIssue> {
 
 async function main() {
   // Check for --jq flag
-  const method: CorrectionMethod = process.argv.includes('--jq') ? 'jq' : 'json-patch'
+  const method: CorrectionMethod =
+    process.argv.includes('--jq') ? 'jq' : 'json-patch'
 
   const pipeline = new Pipeline(
     {
@@ -72,7 +85,8 @@ async function main() {
   console.log('Watch the correction rounds fix schema mismatches.\n')
 
   const result = await pipeline.run(new IssueAnalyzer(method), {
-    description: 'The login button does not respond when clicked on mobile devices',
+    description:
+      'The login button does not respond when clicked on mobile devices',
   })
 
   console.log('\n=== Final Result ===')

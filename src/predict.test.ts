@@ -159,7 +159,7 @@ describe('Predict', () => {
   it('corrects JSON responses with json-patch', async () => {
     // First response: missing required 'age' field
     mockBackend.addJsonResponse({ name: 'John Doe' })
-    
+
     // Correction response: valid JSON Patch to add missing field
     mockBackend.addResponse({
       response: '```json\n[{"op": "add", "path": "/age", "value": 30}]\n```',
@@ -173,7 +173,7 @@ describe('Predict', () => {
     // After correction, should have both fields
     expect(result.data.name).toBe('John Doe')
     expect(result.data.age).toBe(30)
-    
+
     // Verify correction was attempted (2 calls total)
     expect(mockBackend.getCallCount()).toBe(2)
   })

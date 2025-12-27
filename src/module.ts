@@ -51,12 +51,17 @@ export abstract class SignatureModule<
 }
 
 /** SimpleModule is a SignatureModule that just executes the predictor. */
-class SimpleModule<S extends SignatureDef<any, any>> extends SignatureModule<S> {
+class SimpleModule<
+  S extends SignatureDef<any, any>,
+> extends SignatureModule<S> {
   constructor(sig: S, config?: PredictConfig) {
     super(sig, config)
   }
 
-  async forward(input: InferInputs<S>, ctx: ExecutionContext): Promise<InferOutputs<S>> {
+  async forward(
+    input: InferInputs<S>,
+    ctx: ExecutionContext,
+  ): Promise<InferOutputs<S>> {
     return (await this.predictor.execute(input, ctx)).data
   }
 }

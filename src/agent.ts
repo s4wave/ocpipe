@@ -4,10 +4,29 @@
  * Wraps the OpenCode CLI for running LLM agents with session management.
  */
 
-import { spawn } from 'child_process'
+import { spawn, execSync } from 'child_process'
 import { mkdir } from 'fs/promises'
 import { PROJECT_ROOT, TMP_DIR } from './paths.js'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
+
+/** Check if opencode is available in system PATH */
+function hasSystemOpencode(): boolean {
+  try {
+    execSync('which opencode', { stdio: 'ignore' })
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** Get command and args to invoke opencode */
+function getOpencodeCommand(args: string[]): { cmd: string; args: string[] } {
+  if (hasSystemOpencode()) {
+    return { cmd: 'opencode', args }
+  }
+  // Fallback to bunx with ocpipe package (which has opencode-ai as dependency)
+  return { cmd: 'bunx', args: ['-p', 'ocpipe', 'opencode', ...args] }
+}
 
 /** runAgent executes an OpenCode agent with a prompt, streaming output in real-time. */
 export async function runAgent(
@@ -23,14 +42,23 @@ export async function runAgent(
     `\n>>> OpenCode [${agent}] [${modelStr}] ${sessionInfo}: ${promptPreview}...`,
   )
 
-  const args = ['run', '--format', 'default', '--agent', agent, '--model', modelStr]
+  const args = [
+    'run',
+    '--format',
+    'default',
+    '--agent',
+    agent,
+    '--model',
+    modelStr,
+  ]
 
   if (sessionId) {
     args.push('--session', sessionId)
   }
 
   return new Promise((resolve, reject) => {
-    const proc = spawn('opencode', args, {
+    const opencodeCmd = getOpencodeCommand(args)
+    const proc = spawn(opencodeCmd.cmd, opencodeCmd.args, {
       cwd: PROJECT_ROOT,
       stdio: ['pipe', 'pipe', 'pipe'],
     })
@@ -116,23 +144,20 @@ async function exportSession(sessionId: string): Promise<string | null> {
 
   try {
     await mkdir(TMP_DIR, { recursive: true })
-    const proc = Bun.spawn(
-      [
-        'opencode',
-        'session',
-        'export',
-        sessionId,
-        '--format',
-        'json',
-        '-o',
-        tmpPath,
-      ],
-      {
-        cwd: PROJECT_ROOT,
-        stdout: 'pipe',
-        stderr: 'pipe',
-      },
-    )
+    const opencodeCmd = getOpencodeCommand([
+      'session',
+      'export',
+      sessionId,
+      '--format',
+      'json',
+      '-o',
+      tmpPath,
+    ])
+    const proc = Bun.spawn([opencodeCmd.cmd, ...opencodeCmd.args], {
+      cwd: PROJECT_ROOT,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    })
 
     await proc.exited
 

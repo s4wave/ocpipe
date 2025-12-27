@@ -24,11 +24,13 @@ bun run example/index.ts
 ```
 
 This will:
+
 1. Create a pipeline with default configuration
 2. Send a greeting request to the LLM
 3. Print the generated greeting and emoji
 
 **Expected output:**
+
 ```
 ============================================================
 STEP 1: Greeter
@@ -52,6 +54,7 @@ The example has three files that demonstrate DSTS's core concepts:
 ### 1. Signature (`signature.ts`)
 
 A **Signature** declares the contract between your code and the LLM. It defines:
+
 - `doc`: Instructions for the LLM
 - `inputs`: What data you provide
 - `outputs`: What data you expect back
@@ -99,13 +102,16 @@ A **Pipeline** orchestrates execution, managing sessions, checkpoints, and retri
 import { Pipeline, createBaseState } from '../index.js'
 import { Greeter } from './module.js'
 
-const pipeline = new Pipeline({
-  name: 'hello-world',
-  defaultModel: { providerID: 'anthropic', modelID: 'claude-haiku-4-5' },
-  defaultAgent: 'code',
-  checkpointDir: './ckpt',
-  logDir: './logs',
-}, createBaseState)
+const pipeline = new Pipeline(
+  {
+    name: 'hello-world',
+    defaultModel: { providerID: 'anthropic', modelID: 'claude-haiku-4-5' },
+    defaultAgent: 'code',
+    checkpointDir: './ckpt',
+    logDir: './logs',
+  },
+  createBaseState,
+)
 
 const result = await pipeline.run(new Greeter(), { name: 'World' })
 console.log(result.data.greeting)
@@ -126,7 +132,9 @@ export const Farewell = signature({
   doc: 'Generate a friendly farewell for the given name.',
   inputs: {
     name: field.string('The name of the person to bid farewell'),
-    context: field.string('The context of the farewell (e.g., "end of meeting", "going on vacation")'),
+    context: field.string(
+      'The context of the farewell (e.g., "end of meeting", "going on vacation")',
+    ),
   },
   outputs: {
     farewell: field.string('A friendly farewell message'),
@@ -169,13 +177,16 @@ import { Greeter } from './module.js'
 import { Fareweller } from './farewell-module.js'
 
 async function main() {
-  const pipeline = new Pipeline({
-    name: 'hello-goodbye',
-    defaultModel: { providerID: 'anthropic', modelID: 'claude-haiku-4-5' },
-    defaultAgent: 'code',
-    checkpointDir: './ckpt',
-    logDir: './logs',
-  }, createBaseState)
+  const pipeline = new Pipeline(
+    {
+      name: 'hello-goodbye',
+      defaultModel: { providerID: 'anthropic', modelID: 'claude-haiku-4-5' },
+      defaultAgent: 'code',
+      checkpointDir: './ckpt',
+      logDir: './logs',
+    },
+    createBaseState,
+  )
 
   // Run greeter
   const greeting = await pipeline.run(new Greeter(), { name: 'Alice' })
@@ -207,6 +218,7 @@ bun run example/correction.ts
 ```
 
 This example uses field names that LLMs often get wrong:
+
 - `issue_type` (LLMs often return `type`)
 - `severity` (LLMs often return `priority`)
 - `explanation` (LLMs often return `description` or `reason`)
@@ -222,6 +234,7 @@ When the LLM returns incorrect field names, you'll see correction rounds:
 ```
 
 The correction system:
+
 1. Detects schema validation errors
 2. Finds similar field names in the response (e.g., `type` for `issue_type`)
 3. Asks the LLM for patches to fix the errors
@@ -232,10 +245,10 @@ The correction system:
 
 DSTS supports two correction methods:
 
-| Method | Format | Requirements |
-|--------|--------|--------------|
-| `json-patch` (default) | RFC 6902 JSON Patch | None (pure TypeScript) |
-| `jq` | jq-style expressions | `jq` binary installed |
+| Method                 | Format               | Requirements           |
+| ---------------------- | -------------------- | ---------------------- |
+| `json-patch` (default) | RFC 6902 JSON Patch  | None (pure TypeScript) |
+| `jq`                   | jq-style expressions | `jq` binary installed  |
 
 **JSON Patch** is the default because it requires no external dependencies and uses a standardized format that LLMs are familiar with from API documentation.
 
@@ -244,7 +257,7 @@ To use jq instead:
 ```typescript
 super(MySignature, {
   correction: {
-    method: 'jq',  // Use jq-style patches (requires jq binary)
+    method: 'jq', // Use jq-style patches (requires jq binary)
   },
 })
 ```
@@ -261,8 +274,8 @@ Full configuration options:
 super(MySignature, {
   correction: {
     method: 'json-patch', // 'json-patch' (default) or 'jq'
-    maxFields: 5,         // Max fields to fix per round
-    maxRounds: 3,         // Max correction attempts
+    maxFields: 5, // Max fields to fix per round
+    maxRounds: 3, // Max correction attempts
   },
 })
 ```
@@ -290,13 +303,13 @@ const resumed = await Pipeline.loadCheckpoint(config, sessionId)
 DSTS provides field helpers for common types:
 
 ```typescript
-field.string('description')           // string
-field.number('description')           // number
-field.boolean('description')          // boolean
+field.string('description') // string
+field.number('description') // number
+field.boolean('description') // boolean
 field.array(z.string(), 'description') // string[]
-field.object({ key: z.string() })     // { key: string }
-field.enum(['a', 'b'] as const)       // 'a' | 'b'
-field.optional(field.string())        // string | undefined
+field.object({ key: z.string() }) // { key: string }
+field.enum(['a', 'b'] as const) // 'a' | 'b'
+field.optional(field.string()) // string | undefined
 ```
 
 ### Complex Modules

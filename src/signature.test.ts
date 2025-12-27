@@ -66,7 +66,10 @@ describe('field helpers', () => {
   it('creates object field', () => {
     const f = field.object({ name: z.string(), age: z.number() }, 'person')
     expect(f.desc).toBe('person')
-    expect(f.type.parse({ name: 'John', age: 30 })).toEqual({ name: 'John', age: 30 })
+    expect(f.type.parse({ name: 'John', age: 30 })).toEqual({
+      name: 'John',
+      age: 30,
+    })
   })
 
   it('creates enum field', () => {

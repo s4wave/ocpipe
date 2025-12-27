@@ -67,7 +67,9 @@ describe.skipIf(!runIntegration)('DSTS Integration', () => {
 
       expect(result.data).toBeDefined()
       expect(typeof result.data.subject).toBe('string')
-      expect(['positive', 'negative', 'neutral']).toContain(result.data.sentiment)
+      expect(['positive', 'negative', 'neutral']).toContain(
+        result.data.sentiment,
+      )
       expect(result.sessionId).toBeTruthy()
       expect(result.duration).toBeGreaterThan(0)
     }, 30000)

@@ -132,15 +132,15 @@ export interface SignatureDef<
 
 /** Infer the input type from a signature definition. */
 export type InferInputs<S extends SignatureDef<any, any>> =
-  S extends SignatureDef<infer I, any>
-    ? { [K in keyof I]: z.infer<I[K]['type']> }
-    : never
+  S extends SignatureDef<infer I, any> ?
+    { [K in keyof I]: z.infer<I[K]['type']> }
+  : never
 
 /** Infer the output type from a signature definition. */
 export type InferOutputs<S extends SignatureDef<any, any>> =
-  S extends SignatureDef<any, infer O>
-    ? { [K in keyof O]: z.infer<O[K]['type']> }
-    : never
+  S extends SignatureDef<any, infer O> ?
+    { [K in keyof O]: z.infer<O[K]['type']> }
+  : never
 
 // ============================================================================
 // Retry Configuration

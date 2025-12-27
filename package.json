@@ -28,15 +28,20 @@
   "engines": {
     "bun": ">=1.0.0"
   },
+  "dependencies": {
+    "opencode-ai": "latest"
+  },
   "peerDependencies": {
     "zod": "^4.0.0"
   },
   "devDependencies": {
     "bun-types": "^1.3.5",
+    "prettier": "^3.7.4",
     "typescript": "^5.0.0",
     "vitest": "^4.0.0"
   },
   "scripts": {
+    "format": "bun run prettier --write .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

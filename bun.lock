@@ -4,8 +4,12 @@
   "workspaces": {
     "": {
       "name": "ocpipe",
+      "dependencies": {
+        "opencode-ai": "latest",
+      },
       "devDependencies": {
         "bun-types": "^1.3.5",
+        "prettier": "^3.7.4",
         "typescript": "^5.0.0",
         "vitest": "^4.0.0",
       },
@@ -161,6 +165,30 @@
 
     "obug": ["obug@2.1.1", "", {}, "sha512-uTqF9MuPraAQ+IsnPf366RG4cP9RtUi7MLO1N3KEc+wb0a6yKpeL0lmk2IB1jY5KHPAlTc6T/JRdC/YqxHNwkQ=="],
 
+    "opencode-ai": ["opencode-ai@1.0.203", "", { "optionalDependencies": { "opencode-darwin-arm64": "1.0.203", "opencode-darwin-x64": "1.0.203", "opencode-darwin-x64-baseline": "1.0.203", "opencode-linux-arm64": "1.0.203", "opencode-linux-arm64-musl": "1.0.203", "opencode-linux-x64": "1.0.203", "opencode-linux-x64-baseline": "1.0.203", "opencode-linux-x64-baseline-musl": "1.0.203", "opencode-linux-x64-musl": "1.0.203", "opencode-windows-x64": "1.0.203", "opencode-windows-x64-baseline": "1.0.203" }, "bin": { "opencode": "bin/opencode" } }, "sha512-qrzGxXlBLgx4CYQwBwpOK6nOzyYjeZCPoO3wBwbSK8PJ26969+vqz2aRKmPe/yE9GD8xBuUfx0D9KbEarAsN5w=="],
+
+    "opencode-darwin-arm64": ["opencode-darwin-arm64@1.0.203", "", { "os": "darwin", "cpu": "arm64" }, "sha512-iKxuUg8NBfMoh+xbSj0/NG/xTbU9Y31MSwFpcSm2ZA1qC9OY5N9UzDnIRzd9TpPCXafOcewZ1RnuemIN/laVqA=="],
+
+    "opencode-darwin-x64": ["opencode-darwin-x64@1.0.203", "", { "os": "darwin", "cpu": "x64" }, "sha512-GmCZaBVa53e0FK8sOwU1v7QppXducjoRr6cMlMe04fHzvKZUsuZoJFMtY1DrNHWVENLQhQqB5LR8qe1Ae3TsMg=="],
+
+    "opencode-darwin-x64-baseline": ["opencode-darwin-x64-baseline@1.0.203", "", { "os": "darwin", "cpu": "x64" }, "sha512-NXrWO83HIrZmwQI2BRWQWgp6eMMkYfydaUadNHAx+jPQarsOEwkblA+KLbC80C399KfiK3tNYKwYFGsDMlqsaA=="],
+
+    "opencode-linux-arm64": ["opencode-linux-arm64@1.0.203", "", { "os": "linux", "cpu": "arm64" }, "sha512-/mavDhe9horX539K3qxKx7kAIE13aPS6mlfKX7kg30ytAheyDtzY80htUhX5JuwKiXWmczOfK62rBjUaYiTBUw=="],
+
+    "opencode-linux-arm64-musl": ["opencode-linux-arm64-musl@1.0.203", "", { "os": "linux", "cpu": "arm64" }, "sha512-MN5RXkDv5HoLGNM2LIFmvuEb5fHtTXQ5NGx38Wjp8ZqZJO9vKDytNAI0A0rAD1dXR9uLONU32bp3b6VeIoTu0A=="],
+
+    "opencode-linux-x64": ["opencode-linux-x64@1.0.203", "", { "os": "linux", "cpu": "x64" }, "sha512-ZnSq/4g3HTx/OnwlieM2/31htTB0Cy45+9sc8cmbXTyb6lkOuUPTQnBK/QOcwxgo9FFPckqeoUA5L5QuSYXX/w=="],
+
+    "opencode-linux-x64-baseline": ["opencode-linux-x64-baseline@1.0.203", "", { "os": "linux", "cpu": "x64" }, "sha512-+cxOZMbW+bZ+yaDHz0AnCasPcj+zd/CL+SZLreNeD5BexR4vRj+NgzdrwK5WT1Dh821qBz+Kz8G7fi5oFVcpKg=="],
+
+    "opencode-linux-x64-baseline-musl": ["opencode-linux-x64-baseline-musl@1.0.203", "", { "os": "linux", "cpu": "x64" }, "sha512-kbeMmrzn3WvxP90ehx0zY/5+vFK2fKKRjgWCGqkNTPKP22B1xgm1Mi/KtFC/xIgj3KJnCGbEP32/rRSTDMgyIQ=="],
+
+    "opencode-linux-x64-musl": ["opencode-linux-x64-musl@1.0.203", "", { "os": "linux", "cpu": "x64" }, "sha512-qd0EcASO7GN/HNjOMuWTSw2EWrl86psNGVEn3xawVkmaY1iItTQvfXh9z8WROxKTF2EsSzQayx5ngcynEVPYpg=="],
+
+    "opencode-windows-x64": ["opencode-windows-x64@1.0.203", "", { "os": "win32", "cpu": "x64" }, "sha512-fCnEs3jRDnKGXhfC7u/JAal2KTKjZ14TlU3LQX8nIQDV+5WBEsgiA9MlrM7xKQYoWhj7tGZSvmZD2RN5ynkSrA=="],
+
+    "opencode-windows-x64-baseline": ["opencode-windows-x64-baseline@1.0.203", "", { "os": "win32", "cpu": "x64" }, "sha512-srkfTSd2Lh1f+tocCIvisZ4cWc+pWk8a7GVkuS5DpkBrUNOdLiXD+zDVibP/iPSqTc6pIfISMFdGZvkGKaJ3PQ=="],
+
     "pathe": ["pathe@2.0.3", "", {}, "sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w=="],
 
     "picocolors": ["picocolors@1.1.1", "", {}, "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="],
@@ -168,6 +196,8 @@
     "picomatch": ["picomatch@4.0.3", "", {}, "sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q=="],
 
     "postcss": ["postcss@8.5.6", "", { "dependencies": { "nanoid": "^3.3.11", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg=="],
+
+    "prettier": ["prettier@3.7.4", "", { "bin": { "prettier": "bin/prettier.cjs" } }, "sha512-v6UNi1+3hSlVvv8fSaoUbggEM5VErKmmpGA7Pl3HF8V6uKY7rvClBOJlH6yNwQtfTueNkGVpOv/mtWL9L4bgRA=="],
 
     "rollup": ["rollup@4.54.0", "", { "dependencies": { "@types/estree": "1.0.8" }, "optionalDependencies": { "@rollup/rollup-android-arm-eabi": "4.54.0", "@rollup/rollup-android-arm64": "4.54.0", "@rollup/rollup-darwin-arm64": "4.54.0", "@rollup/rollup-darwin-x64": "4.54.0", "@rollup/rollup-freebsd-arm64": "4.54.0", "@rollup/rollup-freebsd-x64": "4.54.0", "@rollup/rollup-linux-arm-gnueabihf": "4.54.0", "@rollup/rollup-linux-arm-musleabihf": "4.54.0", "@rollup/rollup-linux-arm64-gnu": "4.54.0", "@rollup/rollup-linux-arm64-musl": "4.54.0", "@rollup/rollup-linux-loong64-gnu": "4.54.0", "@rollup/rollup-linux-ppc64-gnu": "4.54.0", "@rollup/rollup-linux-riscv64-gnu": "4.54.0", "@rollup/rollup-linux-riscv64-musl": "4.54.0", "@rollup/rollup-linux-s390x-gnu": "4.54.0", "@rollup/rollup-linux-x64-gnu": "4.54.0", "@rollup/rollup-linux-x64-musl": "4.54.0", "@rollup/rollup-openharmony-arm64": "4.54.0", "@rollup/rollup-win32-arm64-msvc": "4.54.0", "@rollup/rollup-win32-ia32-msvc": "4.54.0", "@rollup/rollup-win32-x64-gnu": "4.54.0", "@rollup/rollup-win32-x64-msvc": "4.54.0", "fsevents": "~2.3.2" }, "bin": { "rollup": "dist/bin/rollup" } }, "sha512-3nk8Y3a9Ea8szgKhinMlGMhGMw89mqule3KWczxhIzqudyHdCIOHw8WJlj/r329fACjKLEh13ZSk7oE22kyeIw=="],
 

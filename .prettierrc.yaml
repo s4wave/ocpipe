@@ -1,0 +1,22 @@
+semi: false
+singleQuote: true
+experimentalTernaries: true
+# tabWidth: 2
+# printWidth: 100
+# trailingComma: es5
+
+overrides:
+  - files:
+      - '*.json'
+      - '*.jsonc'
+      - '.prettierrc'
+      - 'tsconfig.json'
+      - 'package.json'
+    options:
+      tabWidth: 2
+      printWidth: 100
+  - files:
+      - '*.yml'
+      - '*.yaml'
+    options:
+      tabWidth: 2

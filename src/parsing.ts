@@ -77,7 +77,13 @@ export function tryParseJson<T>(
   if (!jsonStr) {
     return {
       ok: false,
-      errors: [{ path: '', message: 'No JSON found in response', expectedType: 'object' }],
+      errors: [
+        {
+          path: '',
+          message: 'No JSON found in response',
+          expectedType: 'object',
+        },
+      ],
     }
   }
 
@@ -88,7 +94,13 @@ export function tryParseJson<T>(
     const parseErr = e as SyntaxError
     return {
       ok: false,
-      errors: [{ path: '', message: `JSON parse failed: ${parseErr.message}`, expectedType: 'object' }],
+      errors: [
+        {
+          path: '',
+          message: `JSON parse failed: ${parseErr.message}`,
+          expectedType: 'object',
+        },
+      ],
     }
   }
 
@@ -131,9 +143,10 @@ function zodErrorsToFieldErrors(
     let foundValue: unknown
 
     // Check if field is missing (received undefined)
-    const isMissing = issue.code === 'invalid_type' && 
+    const isMissing =
+      issue.code === 'invalid_type' &&
       (issue as { received?: string }).received === 'undefined'
-    
+
     if (isMissing) {
       // Field is missing - look for similar field names in parsed data
       const similar = findSimilarField(fieldName, parsed, schemaKeys)
@@ -187,14 +200,21 @@ function findSimilarField(
   for (const key of extraKeys) {
     const normalizedKey = key.toLowerCase().replace(/_/g, '')
     if (normalizedKey === normalized) return key
-    if (normalizedKey.includes(normalized) || normalized.includes(normalizedKey)) return key
+    if (
+      normalizedKey.includes(normalized) ||
+      normalized.includes(normalizedKey)
+    )
+      return key
   }
 
   return undefined
 }
 
 /** getExpectedType extracts a human-readable type description from a Zod issue. */
-function getExpectedType(issue: z.ZodIssue, schema: Record<string, FieldConfig>): string {
+function getExpectedType(
+  issue: z.ZodIssue,
+  schema: Record<string, FieldConfig>,
+): string {
   const fieldName = issue.path[0] as string
   const fieldConfig = schema[fieldName]
 
@@ -225,7 +245,9 @@ export function zodTypeToString(zodType: z.ZodType): string {
       return `enum[${opts.map((v) => `"${v}"`).join(', ')}]`
     }
     // Fallback to _def
-    const def = (zodType as unknown as { _def?: { values?: readonly string[] } })._def
+    const def = (
+      zodType as unknown as { _def?: { values?: readonly string[] } }
+    )._def
     const values = def?.values ?? []
     if (values.length > 0) {
       return `enum[${values.map((v) => `"${v}"`).join(', ')}]`
@@ -242,7 +264,9 @@ export function zodTypeToString(zodType: z.ZodType): string {
   }
   if (zodType instanceof z.ZodObject) {
     // ZodObject has .shape property
-    const shapeObj = (zodType as unknown as { shape?: Record<string, z.ZodType> }).shape
+    const shapeObj = (
+      zodType as unknown as { shape?: Record<string, z.ZodType> }
+    ).shape
     if (shapeObj) {
       const fields = Object.keys(shapeObj).slice(0, 3).join(', ')
       return `object{${fields}${Object.keys(shapeObj).length > 3 ? ', ...' : ''}}`
@@ -251,14 +275,18 @@ export function zodTypeToString(zodType: z.ZodType): string {
   }
   if (zodType instanceof z.ZodOptional) {
     // ZodOptional has .unwrap() method
-    const unwrapped = (zodType as unknown as { unwrap?: () => z.ZodType }).unwrap?.()
+    const unwrapped = (
+      zodType as unknown as { unwrap?: () => z.ZodType }
+    ).unwrap?.()
     if (unwrapped) {
       return `optional<${zodTypeToString(unwrapped)}>`
     }
     return 'optional'
   }
   if (zodType instanceof z.ZodNullable) {
-    const unwrapped = (zodType as unknown as { unwrap?: () => z.ZodType }).unwrap?.()
+    const unwrapped = (
+      zodType as unknown as { unwrap?: () => z.ZodType }
+    ).unwrap?.()
     if (unwrapped) {
       return `nullable<${zodTypeToString(unwrapped)}>`
     }
@@ -266,7 +294,8 @@ export function zodTypeToString(zodType: z.ZodType): string {
   }
   if (zodType instanceof z.ZodDefault) {
     // ZodDefault wraps inner type
-    const inner = (zodType as unknown as { _def?: { innerType?: z.ZodType } })._def?.innerType
+    const inner = (zodType as unknown as { _def?: { innerType?: z.ZodType } })
+      ._def?.innerType
     if (inner) {
       return `default<${zodTypeToString(inner)}>`
     }
@@ -322,7 +351,9 @@ export function buildPatchPrompt(
   lines.push(`Expected type: ${error.expectedType}`)
 
   if (error.foundField) {
-    lines.push(`Found similar field: "${error.foundField}" with value: ${JSON.stringify(error.foundValue)}`)
+    lines.push(
+      `Found similar field: "${error.foundField}" with value: ${JSON.stringify(error.foundValue)}`,
+    )
   }
 
   lines.push('')
@@ -354,9 +385,13 @@ export function buildBatchPatchPrompt(
   lines.push('ERRORS:')
   for (let i = 0; i < errors.length; i++) {
     const error = errors[i]!
-    lines.push(`${i + 1}. Field "${error.path}": ${error.message} (expected: ${error.expectedType})`)
+    lines.push(
+      `${i + 1}. Field "${error.path}": ${error.message} (expected: ${error.expectedType})`,
+    )
     if (error.foundField) {
-      lines.push(`   Found similar: "${error.foundField}" = ${JSON.stringify(error.foundValue)}`)
+      lines.push(
+        `   Found similar: "${error.foundField}" = ${JSON.stringify(error.foundValue)}`,
+      )
     }
   }
 
@@ -366,7 +401,9 @@ export function buildBatchPatchPrompt(
   lines.push(JSON.stringify(abbreviateJson(currentJson), null, 2))
   lines.push('```')
   lines.push('')
-  lines.push('Respond with jq-style patches to fix ALL errors. Use | to chain multiple patches.')
+  lines.push(
+    'Respond with jq-style patches to fix ALL errors. Use | to chain multiple patches.',
+  )
   lines.push('Examples:')
   lines.push('- .field1 = "value" | .field2 = 123')
   lines.push('- .items[0].name = .items[0].title | del(.items[0].title)')
@@ -378,7 +415,10 @@ export function buildBatchPatchPrompt(
 }
 
 /** abbreviateJson truncates large values for display in prompts. */
-function abbreviateJson(obj: Record<string, unknown>, maxLength = 100): Record<string, unknown> {
+function abbreviateJson(
+  obj: Record<string, unknown>,
+  maxLength = 100,
+): Record<string, unknown> {
   const result: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(obj)) {
@@ -401,7 +441,9 @@ function abbreviateJson(obj: Record<string, unknown>, maxLength = 100): Record<s
 }
 
 /** convertNullToUndefined recursively converts null values to undefined (for optional fields). */
-function convertNullToUndefined(obj: Record<string, unknown>): Record<string, unknown> {
+function convertNullToUndefined(
+  obj: Record<string, unknown>,
+): Record<string, unknown> {
   const result: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(obj)) {
@@ -441,7 +483,10 @@ export function extractPatch(response: string): string {
   // If no clear patch found, try the whole response (minus markdown)
   const cleaned = response.replace(/```[^`]*```/g, '').trim()
   const firstLine = cleaned.split('\n')[0]?.trim()
-  if (firstLine && (firstLine.startsWith('.') || firstLine.startsWith('del('))) {
+  if (
+    firstLine &&
+    (firstLine.startsWith('.') || firstLine.startsWith('del('))
+  ) {
     return firstLine
   }
 
@@ -475,7 +520,7 @@ export function applyJqPatch(
     /\bdebug\b/,
     /\berror\b/,
     /\bhalt\b/,
-    /\$/,  // Any variable reference (safest to disallow all)
+    /\$/, // Any variable reference (safest to disallow all)
   ]
 
   for (const pattern of unsafePatterns) {
@@ -535,7 +580,9 @@ export function buildJsonPatchPrompt(
   lines.push(`Expected type: ${error.expectedType}`)
 
   if (error.foundField) {
-    lines.push(`Found similar field: "${error.foundField}" with value: ${JSON.stringify(error.foundValue)}`)
+    lines.push(
+      `Found similar field: "${error.foundField}" with value: ${JSON.stringify(error.foundValue)}`,
+    )
   }
 
   lines.push('')
@@ -544,11 +591,17 @@ export function buildJsonPatchPrompt(
   lines.push(JSON.stringify(abbreviateJson(currentJson), null, 2))
   lines.push('```')
   lines.push('')
-  lines.push('Respond with ONLY a JSON Patch array (RFC 6902) to fix this field. Examples:')
+  lines.push(
+    'Respond with ONLY a JSON Patch array (RFC 6902) to fix this field. Examples:',
+  )
   lines.push('- [{"op": "add", "path": "/field_name", "value": "new_value"}]')
   lines.push('- [{"op": "replace", "path": "/field_name", "value": 123}]')
-  lines.push('- [{"op": "move", "from": "/wrong_field", "path": "/correct_field"}]')
-  lines.push('- [{"op": "remove", "path": "/wrong_field"}, {"op": "add", "path": "/correct_field", "value": "..."}]')
+  lines.push(
+    '- [{"op": "move", "from": "/wrong_field", "path": "/correct_field"}]',
+  )
+  lines.push(
+    '- [{"op": "remove", "path": "/wrong_field"}, {"op": "add", "path": "/correct_field", "value": "..."}]',
+  )
   lines.push('')
   lines.push('Your JSON Patch:')
 
@@ -567,9 +620,13 @@ export function buildBatchJsonPatchPrompt(
   lines.push('ERRORS:')
   for (let i = 0; i < errors.length; i++) {
     const error = errors[i]!
-    lines.push(`${i + 1}. Field "${error.path}": ${error.message} (expected: ${error.expectedType})`)
+    lines.push(
+      `${i + 1}. Field "${error.path}": ${error.message} (expected: ${error.expectedType})`,
+    )
     if (error.foundField) {
-      lines.push(`   Found similar: "${error.foundField}" = ${JSON.stringify(error.foundValue)}`)
+      lines.push(
+        `   Found similar: "${error.foundField}" = ${JSON.stringify(error.foundValue)}`,
+      )
     }
   }
 
@@ -579,7 +636,9 @@ export function buildBatchJsonPatchPrompt(
   lines.push(JSON.stringify(abbreviateJson(currentJson), null, 2))
   lines.push('```')
   lines.push('')
-  lines.push('Respond with a JSON Patch array (RFC 6902) to fix ALL errors. Examples:')
+  lines.push(
+    'Respond with a JSON Patch array (RFC 6902) to fix ALL errors. Examples:',
+  )
   lines.push('- [{"op": "move", "from": "/type", "path": "/issue_type"}]')
   lines.push('- [{"op": "replace", "path": "/items/0/name", "value": "fixed"}]')
   lines.push('- [{"op": "add", "path": "/missing_field", "value": "default"}]')
@@ -592,7 +651,9 @@ export function buildBatchJsonPatchPrompt(
 /** extractJsonPatch extracts a JSON Patch array from an LLM response. */
 export function extractJsonPatch(response: string): JsonPatchOperation[] {
   // Try to find JSON array in code blocks first
-  const codeBlockMatch = response.match(/```(?:json)?\s*(\[[\s\S]*?\])[\s\S]*?```/)
+  const codeBlockMatch = response.match(
+    /```(?:json)?\s*(\[[\s\S]*?\])[\s\S]*?```/,
+  )
   if (codeBlockMatch?.[1]) {
     try {
       return JSON.parse(codeBlockMatch[1]) as JsonPatchOperation[]
@@ -619,14 +680,18 @@ export function extractJsonPatch(response: string): JsonPatchOperation[] {
 
     if (endIdx > startIdx) {
       try {
-        return JSON.parse(response.slice(startIdx, endIdx)) as JsonPatchOperation[]
+        return JSON.parse(
+          response.slice(startIdx, endIdx),
+        ) as JsonPatchOperation[]
       } catch {
         // Fall through to empty array
       }
     }
   }
 
-  console.error(`  Could not extract JSON Patch from response: ${response.slice(0, 100)}...`)
+  console.error(
+    `  Could not extract JSON Patch from response: ${response.slice(0, 100)}...`,
+  )
   return []
 }
 
@@ -649,7 +714,7 @@ export function applyJsonPatch(
   for (const op of operations) {
     const path = toJsonPointer(op.path)
     const pathParts = path.split('/').filter(Boolean)
-    
+
     try {
       switch (op.op) {
         case 'add':
@@ -682,20 +747,28 @@ export function applyJsonPatch(
           const srcPath = toJsonPointer(op.from)
           const srcParts = srcPath.split('/').filter(Boolean)
           const srcValue = getValueAtPath(result, srcParts)
-          setValueAtPath(result, pathParts, JSON.parse(JSON.stringify(srcValue)))
+          setValueAtPath(
+            result,
+            pathParts,
+            JSON.parse(JSON.stringify(srcValue)),
+          )
           break
         }
         case 'test': {
           // Test operation - verify value matches, throw if not
           const actualValue = getValueAtPath(result, pathParts)
           if (JSON.stringify(actualValue) !== JSON.stringify(op.value)) {
-            console.error(`  JSON Patch test failed: ${path} expected ${JSON.stringify(op.value)}, got ${JSON.stringify(actualValue)}`)
+            console.error(
+              `  JSON Patch test failed: ${path} expected ${JSON.stringify(op.value)}, got ${JSON.stringify(actualValue)}`,
+            )
           }
           break
         }
       }
     } catch (e) {
-      console.error(`  JSON Patch operation failed: ${JSON.stringify(op)} - ${e}`)
+      console.error(
+        `  JSON Patch operation failed: ${JSON.stringify(op)} - ${e}`,
+      )
     }
   }
 
@@ -703,7 +776,10 @@ export function applyJsonPatch(
 }
 
 /** getValueAtPath retrieves a value at a JSON Pointer path. */
-function getValueAtPath(obj: Record<string, unknown>, parts: string[]): unknown {
+function getValueAtPath(
+  obj: Record<string, unknown>,
+  parts: string[],
+): unknown {
   let current: unknown = obj
   for (const part of parts) {
     if (current === null || current === undefined) return undefined
@@ -720,9 +796,13 @@ function getValueAtPath(obj: Record<string, unknown>, parts: string[]): unknown 
 }
 
 /** setValueAtPath sets a value at a JSON Pointer path. */
-function setValueAtPath(obj: Record<string, unknown>, parts: string[], value: unknown): void {
+function setValueAtPath(
+  obj: Record<string, unknown>,
+  parts: string[],
+  value: unknown,
+): void {
   if (parts.length === 0) return
-  
+
   let current: unknown = obj
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i]!
@@ -749,12 +829,15 @@ function setValueAtPath(obj: Record<string, unknown>, parts: string[], value: un
     const idx = parseInt(lastPart, 10)
     current[idx] = value
   } else if (typeof current === 'object' && current !== null) {
-    (current as Record<string, unknown>)[lastPart] = value
+    ;(current as Record<string, unknown>)[lastPart] = value
   }
 }
 
 /** removeValueAtPath removes a value at a JSON Pointer path. */
-function removeValueAtPath(obj: Record<string, unknown>, parts: string[]): void {
+function removeValueAtPath(
+  obj: Record<string, unknown>,
+  parts: string[],
+): void {
   if (parts.length === 0) return
 
   let current: unknown = obj
@@ -805,8 +888,15 @@ export function parseJson<T>(
   const zodResult = zodSchema.safeParse(result.json)
 
   if (!zodResult.success) {
-    const issues = zodResult.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')
-    throw new ValidationError(`Output validation failed: ${issues}`, response, zodResult.error, errors)
+    const issues = zodResult.error.issues
+      .map((i) => `${i.path.join('.')}: ${i.message}`)
+      .join('; ')
+    throw new ValidationError(
+      `Output validation failed: ${issues}`,
+      response,
+      zodResult.error,
+      errors,
+    )
   }
 
   // Shouldn't reach here
