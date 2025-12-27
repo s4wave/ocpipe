@@ -156,13 +156,13 @@ describe('Predict', () => {
     await expect(predict.execute({ text: 'Test' }, ctx)).rejects.toThrow()
   })
 
-  it('corrects JSON responses with jq patches', async () => {
+  it('corrects JSON responses with json-patch', async () => {
     // First response: missing required 'age' field
     mockBackend.addJsonResponse({ name: 'John Doe' })
     
-    // Correction response: valid jq patch to add missing field
+    // Correction response: valid JSON Patch to add missing field
     mockBackend.addResponse({
-      response: '.age = 30',
+      response: '```json\n[{"op": "add", "path": "/age", "value": 30}]\n```',
     })
 
     const predict = new Predict(TestSig)

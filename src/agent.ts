@@ -6,7 +6,7 @@
 
 import { spawn } from 'child_process'
 import { mkdir } from 'fs/promises'
-import { PROJECT_ROOT, TMP_DIR } from '../paths.js'
+import { PROJECT_ROOT, TMP_DIR } from './paths.js'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
 
 /** runAgent executes an OpenCode agent with a prompt, streaming output in real-time. */

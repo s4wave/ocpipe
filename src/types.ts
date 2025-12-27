@@ -4,7 +4,7 @@
  * Core type definitions for the Declarative Self-Improving TypeScript SDK.
  */
 
-import type { z } from 'zod'
+import type { z } from 'zod/v4'
 
 // ============================================================================
 // Model Configuration

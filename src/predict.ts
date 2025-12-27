@@ -4,7 +4,7 @@
  * Executes a signature by generating a prompt, calling OpenCode, and parsing the response.
  */
 
-import { z } from 'zod'
+import { z } from 'zod/v4'
 import type {
   CorrectionConfig,
   CorrectionMethod,

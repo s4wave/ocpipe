@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "description": "SDK for LLM pipelines with OpenCode and Zod",
   "type": "module",
-  "main": "index.ts",
-  "types": "index.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/s4wave/ocpipe"
@@ -29,11 +29,11 @@
     "bun": ">=1.0.0"
   },
   "peerDependencies": {
-    "zod": "^3.24.0"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
-    "vitest": "^2.0.0"
+    "vitest": "^4.0.0"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -41,8 +41,8 @@
     "test:watch": "vitest"
   },
   "files": [
-    "*.ts",
-    "!*.test.ts",
+    "src/",
+    "!src/*.test.ts",
     "example/"
   ]
 }

@@ -14,9 +14,9 @@
  *   bun run example/correction.ts --jq         # Uses jq method
  */
 
-import { z } from 'zod'
-import { Pipeline, createBaseState, signature, field, SignatureModule } from '../index.js'
-import type { CorrectionMethod, ExecutionContext } from '../types.js'
+import { z } from 'zod/v4'
+import { Pipeline, createBaseState, signature, field, SignatureModule } from '../src/index.js'
+import type { CorrectionMethod, ExecutionContext } from '../src/types.js'
 
 // A signature with field names that LLMs often get wrong
 const AnalyzeIssue = signature({

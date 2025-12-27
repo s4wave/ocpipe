@@ -4,7 +4,7 @@
  * Defines the input/output contract for greeting generation.
  */
 
-import { signature, field } from '../index.js'
+import { signature, field } from '../src/index.js'
 
 export const Greet = signature({
   doc: 'Generate a friendly greeting for the given name.',

@@ -4,7 +4,7 @@
  * Extracts and validates LLM responses using JSON or field marker formats.
  */
 
-import { z } from 'zod'
+import { z } from 'zod/v4'
 import type { FieldConfig, FieldError, TryParseResult } from './types.js'
 
 /** JSON Patch operation (RFC 6902). */

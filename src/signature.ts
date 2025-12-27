@@ -4,7 +4,7 @@
  * Signatures declare input/output contracts for LLM interactions using Zod for validation.
  */
 
-import { z } from 'zod'
+import { z } from 'zod/v4'
 import type { FieldConfig, SignatureDef } from './types.js'
 
 /** signature creates a new signature definition. */

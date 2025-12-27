@@ -4,7 +4,7 @@
  * Demonstrates running a DSTS module in a pipeline.
  */
 
-import { Pipeline, createBaseState } from '../index.js'
+import { Pipeline, createBaseState } from '../src/index.js'
 import { Greeter } from './module.js'
 
 async function main() {
