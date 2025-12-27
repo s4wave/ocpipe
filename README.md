@@ -14,7 +14,7 @@ Signature  →  Predict  →  Module  →  Pipeline
 </div>
 
 ```typescript
-import { signature, field, SignatureModule, Pipeline, createBaseState } from 'ocpipe'
+import { signature, field, module, Pipeline, createBaseState } from 'ocpipe'
 
 // Define a signature
 const Greet = signature({
@@ -28,14 +28,6 @@ const Greet = signature({
   },
 })
 
-// Create a module
-class Greeter extends SignatureModule<typeof Greet> {
-  constructor() { super(Greet) }
-  async forward(input: { name: string }, ctx) {
-    return (await this.predictor.execute(input, ctx)).data
-  }
-}
-
 // Run in a pipeline
 const pipeline = new Pipeline({
   name: 'hello-world',
@@ -45,7 +37,7 @@ const pipeline = new Pipeline({
   logDir: './logs',
 }, createBaseState)
 
-const result = await pipeline.run(new Greeter(), { name: 'World' })
+const result = await pipeline.run(module(Greet), { name: 'World' })
 console.log(result.data.greeting)  // "Hello, World! It's wonderful to meet you!"
 ```
 

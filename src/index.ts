@@ -5,8 +5,7 @@
  *
  * @example
  * ```typescript
- * import { signature, field, SignatureModule, Pipeline } from './dsts/index.js'
- * import { z } from 'zod'
+ * import { signature, field, module, Pipeline, createBaseState } from 'ocpipe'
  *
  * // Define a signature
  * const ParseIntent = signature({
@@ -20,18 +19,6 @@
  *   },
  * })
  *
- * // Create a module (types inferred from signature)
- * class IntentParser extends SignatureModule<typeof ParseIntent> {
- *   constructor() {
- *     super(ParseIntent)
- *   }
- *
- *   async forward(input, ctx) {
- *     const result = await this.predictor.execute(input, ctx)
- *     return result.data
- *   }
- * }
- *
  * // Run in a pipeline
  * const pipeline = new Pipeline({
  *   name: 'my-workflow',
@@ -41,7 +28,7 @@
  *   logDir: './logs',
  * }, createBaseState)
  *
- * const result = await pipeline.run(new IntentParser(), { description: 'Hello world' })
+ * const result = await pipeline.run(module(ParseIntent), { description: 'Hello world' })
  * ```
  */
 
@@ -53,7 +40,7 @@ export { Predict } from './predict.js'
 export type { PredictConfig } from './predict.js'
 
 // Module base class
-export { Module, SignatureModule } from './module.js'
+export { Module, SignatureModule, module } from './module.js'
 
 // Pipeline orchestrator
 export { Pipeline } from './pipeline.js'

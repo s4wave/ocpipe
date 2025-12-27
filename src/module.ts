@@ -10,6 +10,7 @@ import type {
   InferOutputs,
   SignatureDef,
 } from './types.js'
+export type { ExecutionContext } from './types.js'
 import { Predict, type PredictConfig } from './predict.js'
 
 /** Module is the abstract base class for composable workflow units. */
@@ -47,4 +48,23 @@ export abstract class SignatureModule<
     this.sig = sig
     this.predictor = this.predict(sig, config)
   }
+}
+
+/** SimpleModule is a SignatureModule that just executes the predictor. */
+class SimpleModule<S extends SignatureDef<any, any>> extends SignatureModule<S> {
+  constructor(sig: S, config?: PredictConfig) {
+    super(sig, config)
+  }
+
+  async forward(input: InferInputs<S>, ctx: ExecutionContext): Promise<InferOutputs<S>> {
+    return (await this.predictor.execute(input, ctx)).data
+  }
+}
+
+/** module creates a simple Module from a Signature (syntactic sugar). */
+export function module<S extends SignatureDef<any, any>>(
+  sig: S,
+  config?: PredictConfig,
+): Module<InferInputs<S>, InferOutputs<S>> {
+  return new SimpleModule(sig, config)
 }
