@@ -4,3 +4,4 @@ ckpt/
 logs/
 *.log
 .DS_Store
+.tmp

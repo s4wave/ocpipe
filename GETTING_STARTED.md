@@ -355,6 +355,31 @@ field.enum(['a', 'b'] as const) // 'a' | 'b'
 field.optional(field.string()) // string | undefined
 ```
 
+### Type Inference
+
+Use `InferInputs` and `InferOutputs` to extract TypeScript types from a signature:
+
+```typescript
+import { signature, field, InferInputs, InferOutputs } from 'ocpipe'
+
+const Greet = signature({
+  doc: 'Generate a greeting.',
+  inputs: { name: field.string('Name to greet') },
+  outputs: { greeting: field.string('The greeting message') },
+})
+
+// Extract types from the signature
+type GreetInputs = InferInputs<typeof Greet> // { name: string }
+type GreetOutputs = InferOutputs<typeof Greet> // { greeting: string }
+
+// Use in functions
+function processGreeting(input: GreetInputs): void {
+  console.log(`Processing greeting for: ${input.name}`)
+}
+```
+
+This is useful for typing function parameters, return types, or when building generic utilities around signatures.
+
 ### Complex Modules
 
 For modules with multiple predictors or transformed outputs, use the base `Module` class:

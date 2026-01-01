@@ -40,6 +40,11 @@ const pipeline = new Pipeline(
 
 const result = await pipeline.run(module(Greet), { name: 'World' })
 console.log(result.data.greeting)
+
+// Extract types from signatures
+import { InferInputs, InferOutputs } from 'ocpipe'
+type GreetIn = InferInputs<typeof Greet> // { name: string }
+type GreetOut = InferOutputs<typeof Greet> // { greeting: string }
 ```
 
 OpenCode CLI is bundled — run `bun run opencode` or use your system `opencode` if installed.

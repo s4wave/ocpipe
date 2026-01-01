@@ -45,6 +45,20 @@ const AnalyzeCode = signature({
 - `field.nullable(field)` - Nullable wrapper
 - `field.custom(zodType, desc?)` - Custom Zod type
 
+**Type inference:**
+
+Use `InferInputs<S>` and `InferOutputs<S>` to extract TypeScript types from a signature:
+
+```typescript
+import { InferInputs, InferOutputs } from 'ocpipe'
+
+type AnalyzeInputs = InferInputs<typeof AnalyzeCode>
+// { code: string; language: 'typescript' | 'python' | 'rust' }
+
+type AnalyzeOutputs = InferOutputs<typeof AnalyzeCode>
+// { issues: { severity: 'error' | 'warning' | 'info'; message: string; line: number }[]; suggestions: string[]; score: number }
+```
+
 ### Predict
 
 `Predict` bridges a Signature and OpenCode. It handles prompt generation, response parsing, and validation.
