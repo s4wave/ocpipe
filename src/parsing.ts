@@ -79,6 +79,7 @@ export function tryParseJson<T>(
       ok: false,
       errors: [
         {
+          code: 'no_json_found',
           path: '',
           message: 'No JSON found in response',
           expectedType: 'object',
@@ -96,6 +97,7 @@ export function tryParseJson<T>(
       ok: false,
       errors: [
         {
+          code: 'json_parse_failed',
           path: '',
           message: `JSON parse failed: ${parseErr.message}`,
           expectedType: 'object',
@@ -157,6 +159,7 @@ function zodErrorsToFieldErrors(
     }
 
     errors.push({
+      code: 'schema_validation_failed',
       path,
       message: issue.message,
       expectedType,
@@ -1059,4 +1062,42 @@ export function parseJsonFromResponse<T = Record<string, unknown>>(
     `No valid JSON found in response (${response.length} chars). Preview: ${response.slice(0, 300)}...`,
     response,
   )
+}
+
+/** buildJsonRepairPrompt creates a prompt asking the model to fix malformed JSON. */
+export function buildJsonRepairPrompt(
+  malformedJson: string,
+  errorMessage: string,
+  schema: Record<string, FieldConfig>,
+): string {
+  const lines: string[] = []
+
+  lines.push(
+    'Your previous JSON output has a syntax error and cannot be parsed.',
+  )
+  lines.push('')
+  lines.push(`Error: ${errorMessage}`)
+  lines.push('')
+  lines.push('The malformed JSON (may be truncated):')
+  lines.push('```')
+  lines.push(malformedJson.slice(0, 2000))
+  if (malformedJson.length > 2000) {
+    lines.push('... (truncated)')
+  }
+  lines.push('```')
+  lines.push('')
+  lines.push('Please output the COMPLETE, VALID JSON that matches this schema:')
+  lines.push('```json')
+
+  // Build a simple schema description
+  const schemaDesc: Record<string, string> = {}
+  for (const [name, config] of Object.entries(schema)) {
+    schemaDesc[name] = config.desc ?? zodTypeToString(config.type)
+  }
+  lines.push(JSON.stringify(schemaDesc, null, 2))
+  lines.push('```')
+  lines.push('')
+  lines.push('Respond with ONLY the corrected JSON object, no explanation.')
+
+  return lines.join('\n')
 }

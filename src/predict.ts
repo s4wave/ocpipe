@@ -20,6 +20,8 @@ import type {
 import { runAgent } from './agent.js'
 import {
   tryParseResponse,
+  extractJsonString,
+  buildJsonRepairPrompt,
   // jq-style patches
   buildPatchPrompt,
   buildBatchPatchPrompt,
@@ -78,7 +80,7 @@ export class Predict<S extends AnySignature> {
     // Update context with new session ID for continuity
     ctx.sessionId = agentResult.sessionId
 
-    const parseResult = tryParseResponse<InferOutputs<S>>(
+    let parseResult = tryParseResponse<InferOutputs<S>>(
       agentResult.text,
       this.sig.outputs,
     )
@@ -94,7 +96,42 @@ export class Predict<S extends AnySignature> {
       }
     }
 
-    // Parsing failed - attempt correction if enabled
+    // Check if this is a JSON parse error (malformed JSON, not schema validation)
+    const isJsonParseError =
+      parseResult.errors?.some(
+        (e) => e.code === 'json_parse_failed' || e.code === 'no_json_found',
+      ) ?? false
+
+    // Attempt JSON repair if enabled and we have a parse error
+    if (this.config.correction !== false && isJsonParseError) {
+      const rawJson = extractJsonString(agentResult.text)
+      const repairedResult = await this.repairJson(
+        rawJson ?? agentResult.text,
+        parseResult.errors?.[0]?.message ?? 'JSON parse failed',
+        ctx,
+        agentResult.sessionId,
+      )
+
+      if (repairedResult) {
+        // Re-parse the repaired response
+        parseResult = tryParseResponse<InferOutputs<S>>(
+          repairedResult,
+          this.sig.outputs,
+        )
+
+        if (parseResult.ok && parseResult.data) {
+          return {
+            data: parseResult.data,
+            raw: agentResult.text,
+            sessionId: agentResult.sessionId,
+            duration: Date.now() - startTime,
+            model: this.config.model ?? ctx.defaultModel,
+          }
+        }
+      }
+    }
+
+    // Parsing failed - attempt field correction if enabled and we have parsed JSON
     if (
       this.config.correction !== false &&
       parseResult.errors &&
@@ -133,6 +170,62 @@ export class Predict<S extends AnySignature> {
       errors,
       correctionAttempts,
     )
+  }
+
+  /** repairJson asks the model to fix malformed JSON. */
+  private async repairJson(
+    malformedJson: string,
+    errorMessage: string,
+    ctx: ExecutionContext,
+    sessionId: string,
+  ): Promise<string | null> {
+    const correctionConfig =
+      typeof this.config.correction === 'object' ? this.config.correction : {}
+    const maxRounds = correctionConfig.maxRounds ?? 3
+    const correctionModel = correctionConfig.model
+
+    for (let round = 1; round <= maxRounds; round++) {
+      console.error(
+        `\n>>> JSON repair round ${round}/${maxRounds}: fixing malformed JSON...`,
+      )
+
+      const repairPrompt = buildJsonRepairPrompt(
+        malformedJson,
+        errorMessage,
+        this.sig.outputs,
+      )
+
+      // Use same session so the model has context of what it was trying to output
+      const repairResult = await runAgent({
+        prompt: repairPrompt,
+        model: correctionModel ?? ctx.defaultModel,
+        sessionId: correctionModel ? undefined : sessionId,
+        agent: ctx.defaultAgent,
+        timeoutSec: 60,
+      })
+
+      // Try to parse the repaired JSON
+      const repairedJson = extractJsonString(repairResult.text)
+      if (repairedJson) {
+        try {
+          JSON.parse(repairedJson)
+          console.error(`  JSON repair successful after ${round} round(s)!`)
+          return repairedJson
+        } catch (e) {
+          const parseErr = e as SyntaxError
+          console.error(`  Repair attempt ${round} failed: ${parseErr.message}`)
+          malformedJson = repairedJson
+          errorMessage = parseErr.message
+        }
+      } else {
+        console.error(
+          `  Repair attempt ${round} failed: no JSON found in response`,
+        )
+      }
+    }
+
+    console.error(`  JSON repair failed after ${maxRounds} rounds`)
+    return null
   }
 
   /** correctFields attempts to fix field errors using same-session patches with retries. */

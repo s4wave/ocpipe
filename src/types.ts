@@ -173,7 +173,12 @@ export type CorrectionMethod = 'json-patch' | 'jq'
 export interface CorrectionConfig {
   /** Correction method to use (default: 'json-patch'). */
   method?: CorrectionMethod
-  /** Use a different model for corrections (default: same model, same session). */
+  /**
+   * Use a different model for corrections.
+   * When specified, the correction runs in a new session (no context from the original model).
+   * When not specified, corrections reuse the original session so the model has context
+   * of what it was trying to output.
+   */
   model?: ModelConfig
   /** Maximum number of fields to attempt correcting per round (default: 5). */
   maxFields?: number
@@ -181,8 +186,16 @@ export interface CorrectionConfig {
   maxRounds?: number
 }
 
+/** Error codes for field errors, enabling robust error type detection. */
+export type FieldErrorCode =
+  | 'json_parse_failed'
+  | 'no_json_found'
+  | 'schema_validation_failed'
+
 /** A field-level error from schema validation. */
 export interface FieldError {
+  /** Error code for programmatic detection. */
+  code: FieldErrorCode
   /** The field path that failed (e.g., "issues.0.issue_type"). */
   path: string
   /** Human-readable error message. */
