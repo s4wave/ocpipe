@@ -28,6 +28,8 @@ export interface ExecutionContext {
   defaultAgent: string
   /** Timeout in seconds for agent calls. */
   timeoutSec: number
+  /** Working directory for opencode (where .opencode/agents/ lives). */
+  workdir?: string
 }
 
 // ============================================================================
@@ -240,6 +242,8 @@ export interface PipelineConfig {
   retry?: RetryConfig
   /** Default timeout in seconds. */
   timeoutSec?: number
+  /** Working directory for opencode (where .opencode/agents/ lives). */
+  workdir?: string
 }
 
 /** Options for running a pipeline step. */
@@ -270,6 +274,8 @@ export interface RunAgentOptions {
   sessionId?: string
   /** Timeout in seconds. */
   timeoutSec?: number
+  /** Working directory for opencode (where .opencode/agents/ lives). */
+  workdir?: string
 }
 
 /** Result from running an OpenCode agent. */

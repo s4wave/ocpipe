@@ -75,6 +75,7 @@ export class Predict<S extends AnySignature> {
       model: this.config.model ?? ctx.defaultModel,
       sessionId: this.config.newSession ? undefined : ctx.sessionId,
       timeoutSec: ctx.timeoutSec,
+      workdir: ctx.workdir,
     })
 
     // Update context with new session ID for continuity
@@ -202,6 +203,7 @@ export class Predict<S extends AnySignature> {
         sessionId: correctionModel ? undefined : sessionId,
         agent: ctx.defaultAgent,
         timeoutSec: 60,
+        workdir: ctx.workdir,
       })
 
       // Try to parse the repaired JSON
@@ -276,6 +278,7 @@ export class Predict<S extends AnySignature> {
         sessionId: correctionModel ? undefined : sessionId,
         agent: ctx.defaultAgent,
         timeoutSec: 60, // Short timeout for simple patches
+        workdir: ctx.workdir,
       })
 
       // Extract and apply the patch based on method

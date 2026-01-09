@@ -43,12 +43,13 @@
     "prettier": "^3.7.4",
     "typescript": "^5.0.0",
     "typescript-eslint": "^8.52.0",
+    "@typescript/native-preview": "^7.0.0-dev.20251226.1",
     "vitest": "^4.0.0"
   },
   "scripts": {
     "lint": "eslint .",
     "format": "bun run prettier --write .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "release": "npm run release:version && npm run release:commit",

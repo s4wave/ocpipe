@@ -32,6 +32,7 @@ export class Pipeline<S extends BaseState> {
       defaultModel: config.defaultModel,
       defaultAgent: config.defaultAgent,
       timeoutSec: config.timeoutSec ?? 300,
+      workdir: config.workdir,
     }
   }
 
