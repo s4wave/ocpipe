@@ -29,7 +29,7 @@
     "bun": ">=1.0.0"
   },
   "dependencies": {
-    "opencode-ai": "1.1.16"
+    "opencode-ai": "1.1.19"
   },
   "peerDependencies": {
     "zod": "4.3.5"
