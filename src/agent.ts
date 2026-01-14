@@ -65,10 +65,12 @@ export async function runAgent(
 
     let newSessionId = sessionId || ''
     const stdoutChunks: string[] = []
+    const stderrChunks: string[] = []
 
     // Stream stderr in real-time (OpenCode progress output)
     proc.stderr.on('data', (data: Buffer) => {
       const text = data.toString()
+      stderrChunks.push(text)
 
       // Parse session ID from output
       for (const line of text.split('\n')) {
@@ -109,7 +111,10 @@ export async function runAgent(
       if (timeout) clearTimeout(timeout)
 
       if (code !== 0) {
-        reject(new Error(`OpenCode exited with code ${code}`))
+        const stderr = stderrChunks.join('').trim()
+        const lastLines = stderr.split('\n').slice(-5).join('\n')
+        const detail = lastLines ? `\n${lastLines}` : ''
+        reject(new Error(`OpenCode exited with code ${code}${detail}`))
         return
       }
 
