@@ -4,7 +4,7 @@
  * Wraps the OpenCode CLI for running LLM agents with session management.
  */
 
-import { spawn, execSync } from 'child_process'
+import { spawn } from 'child_process'
 import { existsSync } from 'fs'
 import { mkdir } from 'fs/promises'
 import { join } from 'path'
@@ -14,7 +14,7 @@ import type { RunAgentOptions, RunAgentResult } from './types.js'
 /** Find opencode binary from PATH, preferring non-node_modules locations */
 function findOpencode(): string | null {
   const pathDirs = (process.env.PATH || '').split(':')
-  
+
   // First pass: look for opencode in non-node_modules directories
   for (const dir of pathDirs) {
     if (dir.includes('node_modules')) continue
