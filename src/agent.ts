@@ -56,11 +56,14 @@ export async function runAgent(
     args.push('--session', sessionId)
   }
 
+  // Pass prompt as positional argument (stdin doesn't work without TTY)
+  args.push(prompt)
+
   return new Promise((resolve, reject) => {
     const opencodeCmd = getOpencodeCommand(args)
     const proc = spawn(opencodeCmd.cmd, opencodeCmd.args, {
       cwd: workdir ?? PROJECT_ROOT,
-      stdio: ['pipe', 'pipe', 'pipe'],
+      stdio: ['ignore', 'pipe', 'pipe'],
     })
 
     let newSessionId = sessionId || ''
@@ -93,10 +96,6 @@ export async function runAgent(
       stdoutChunks.push(text)
       process.stderr.write(text)
     })
-
-    // Send prompt to stdin
-    proc.stdin.write(prompt)
-    proc.stdin.end()
 
     // Timeout handling (0 = no timeout)
     const timeout =
