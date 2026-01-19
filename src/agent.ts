@@ -5,24 +5,42 @@
  */
 
 import { spawn, execSync } from 'child_process'
+import { existsSync } from 'fs'
 import { mkdir } from 'fs/promises'
+import { join } from 'path'
 import { PROJECT_ROOT, TMP_DIR } from './paths.js'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
 
-/** Check if opencode is available in system PATH */
-function hasSystemOpencode(): boolean {
-  try {
-    execSync('which opencode', { stdio: 'ignore' })
-    return true
-  } catch {
-    return false
+/** Find opencode binary from PATH, preferring non-node_modules locations */
+function findOpencode(): string | null {
+  const pathDirs = (process.env.PATH || '').split(':')
+  
+  // First pass: look for opencode in non-node_modules directories
+  for (const dir of pathDirs) {
+    if (dir.includes('node_modules')) continue
+    const candidate = join(dir, 'opencode')
+    if (existsSync(candidate)) {
+      return candidate
+    }
   }
+
+  // Second pass: check node_modules/.bin as fallback
+  for (const dir of pathDirs) {
+    if (!dir.includes('node_modules')) continue
+    const candidate = join(dir, 'opencode')
+    if (existsSync(candidate)) {
+      return candidate
+    }
+  }
+
+  return null
 }
 
 /** Get command and args to invoke opencode */
 function getOpencodeCommand(args: string[]): { cmd: string; args: string[] } {
-  if (hasSystemOpencode()) {
-    return { cmd: 'opencode', args }
+  const opencode = findOpencode()
+  if (opencode) {
+    return { cmd: opencode, args }
   }
   // Fallback to bunx with ocpipe package (which has opencode-ai as dependency)
   return { cmd: 'bunx', args: ['-p', 'ocpipe', 'opencode', ...args] }
