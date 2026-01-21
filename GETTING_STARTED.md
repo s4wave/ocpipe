@@ -40,7 +40,7 @@ const Greet = signature({
 const pipeline = new Pipeline(
   {
     name: 'repl-demo',
-    defaultModel: { providerID: 'anthropic', modelID: 'claude-haiku-4-5' },
+    defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
     defaultAgent: 'code',
   },
   createBaseState,
@@ -77,7 +77,7 @@ This will:
 STEP 1: Greeter
 ============================================================
 
->>> OpenCode [code] [anthropic/claude-haiku-4-5] [new session]: Generate a friendly greeting for the given name...
+>>> OpenCode [code] [opencode/minimax-m2.1-free] [new session]: Generate a friendly greeting for the given name...
 
 <<< OpenCode done (85 chars) [session:abc123]
 
@@ -146,7 +146,7 @@ import { Greeter } from './module.js'
 const pipeline = new Pipeline(
   {
     name: 'hello-world',
-    defaultModel: { providerID: 'anthropic', modelID: 'claude-haiku-4-5' },
+    defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
     defaultAgent: 'code',
     checkpointDir: './ckpt',
     logDir: './logs',
@@ -221,7 +221,7 @@ async function main() {
   const pipeline = new Pipeline(
     {
       name: 'hello-goodbye',
-      defaultModel: { providerID: 'anthropic', modelID: 'claude-haiku-4-5' },
+      defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
       defaultAgent: 'code',
       checkpointDir: './ckpt',
       logDir: './logs',

@@ -22,7 +22,7 @@
  * // Run in a pipeline
  * const pipeline = new Pipeline({
  *   name: 'my-workflow',
- *   defaultModel: { providerID: 'anthropic', modelID: 'claude-sonnet-4-5' },
+ *   defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
  *   defaultAgent: 'general',
  *   checkpointDir: './ckpt',
  *   logDir: './logs',

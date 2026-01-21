@@ -75,7 +75,7 @@ const result = await predict.execute(
 // With configuration
 const predict = new Predict(AnalyzeCode, {
   agent: 'code-reviewer',
-  model: { providerID: 'anthropic', modelID: 'claude-opus-4-5' },
+  model: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
   newSession: true,
   template: (inputs) => `...`,
 })
@@ -151,7 +151,7 @@ import { Pipeline, createBaseState } from 'ocpipe'
 const pipeline = new Pipeline(
   {
     name: 'code-review',
-    defaultModel: { providerID: 'anthropic', modelID: 'claude-sonnet-4-5' },
+    defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
     defaultAgent: 'general',
     checkpointDir: './ckpt',
     logDir: './logs',
@@ -170,7 +170,7 @@ const result = await pipeline.run(new CodeAnalyzer(), {
 // Run with step options
 const result = await pipeline.run(new CodeAnalyzer(), input, {
   name: 'analyze-main',
-  model: { providerID: 'anthropic', modelID: 'claude-opus-4-5' },
+  model: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
   newSession: true,
   retry: { maxAttempts: 3 },
 })
@@ -253,7 +253,7 @@ vi.mock('./agent.js', () => ({
 }))
 
 const ctx = createMockContext({
-  defaultModel: { providerID: 'anthropic', modelID: 'claude-sonnet-4-5' },
+  defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
 })
 
 // Auto-generate mock outputs from schema

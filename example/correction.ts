@@ -71,7 +71,7 @@ async function main() {
   const pipeline = new Pipeline(
     {
       name: 'correction-demo',
-      defaultModel: { providerID: 'anthropic', modelID: 'claude-haiku-4-5' },
+      defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
       defaultAgent: 'code',
       checkpointDir: './ckpt',
       logDir: './logs',
