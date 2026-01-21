@@ -6,7 +6,7 @@
 
 import { spawn } from 'child_process'
 import { existsSync } from 'fs'
-import { mkdir } from 'fs/promises'
+import { mkdir, writeFile, unlink } from 'fs/promises'
 import { join } from 'path'
 import { PROJECT_ROOT, TMP_DIR } from './paths.js'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
@@ -60,6 +60,13 @@ export async function runAgent(
     `\n>>> OpenCode [${agent}] [${modelStr}] ${sessionInfo}: ${promptPreview}...`,
   )
 
+  // Write prompt to .opencode/prompts/ within the working directory
+  const cwd = workdir ?? PROJECT_ROOT
+  const promptsDir = join(cwd, '.opencode', 'prompts')
+  await mkdir(promptsDir, { recursive: true })
+  const promptFile = join(promptsDir, `prompt_${Date.now()}.txt`)
+  await writeFile(promptFile, prompt)
+
   const args = [
     'run',
     '--format',
@@ -68,19 +75,18 @@ export async function runAgent(
     agent,
     '--model',
     modelStr,
+    '--prompt-file',
+    promptFile,
   ]
 
   if (sessionId) {
     args.push('--session', sessionId)
   }
 
-  // Pass prompt as positional argument (stdin doesn't work without TTY)
-  args.push(prompt)
-
   return new Promise((resolve, reject) => {
     const opencodeCmd = getOpencodeCommand(args)
     const proc = spawn(opencodeCmd.cmd, opencodeCmd.args, {
-      cwd: workdir ?? PROJECT_ROOT,
+      cwd,
       stdio: ['ignore', 'pipe', 'pipe'],
     })
 
@@ -118,14 +124,18 @@ export async function runAgent(
     // Timeout handling (0 = no timeout)
     const timeout =
       timeoutSec > 0 ?
-        setTimeout(() => {
+        setTimeout(async () => {
           proc.kill()
+          await unlink(promptFile).catch(() => {})
           reject(new Error(`Timeout after ${timeoutSec}s`))
         }, timeoutSec * 1000)
       : null
 
     proc.on('close', async (code) => {
       if (timeout) clearTimeout(timeout)
+
+      // Clean up prompt file
+      await unlink(promptFile).catch(() => {})
 
       if (code !== 0) {
         const stderr = stderrChunks.join('').trim()
@@ -156,8 +166,9 @@ export async function runAgent(
       })
     })
 
-    proc.on('error', (err) => {
+    proc.on('error', async (err) => {
       if (timeout) clearTimeout(timeout)
+      await unlink(promptFile).catch(() => {})
       reject(err)
     })
   })

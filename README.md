@@ -49,6 +49,13 @@ type GreetOut = InferOutputs<typeof Greet> // { greeting: string }
 
 OpenCode CLI is bundled — run `bun run opencode` or use your system `opencode` if installed.
 
+### Requirements
+
+Currently requires [this OpenCode fork](https://github.com/paralin/opencode). Once the following PRs are merged, the official release will work:
+
+- [#5426](https://github.com/anomalyco/opencode/pull/5426) - Adds `--prompt-file` flag
+- [#5339](https://github.com/anomalyco/opencode/pull/5339) - Session export fixes
+
 ### Documentation
 
 - [Getting Started](./GETTING_STARTED.md) - Tutorial with examples
