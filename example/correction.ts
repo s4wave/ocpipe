@@ -72,7 +72,7 @@ async function main() {
     {
       name: 'correction-demo',
       defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
-      defaultAgent: 'code',
+      defaultAgent: 'default',
       checkpointDir: './ckpt',
       logDir: './logs',
     },

@@ -33,7 +33,7 @@ const pipeline = new Pipeline(
   {
     name: 'hello-world',
     defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
-    defaultAgent: 'code',
+    defaultAgent: 'default',
   },
   createBaseState,
 )

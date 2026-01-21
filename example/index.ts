@@ -13,7 +13,7 @@ async function main() {
     {
       name: 'hello-world',
       defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
-      defaultAgent: 'code',
+      defaultAgent: 'default',
       checkpointDir: './ckpt',
       logDir: './logs',
     },
