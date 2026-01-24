@@ -8,8 +8,13 @@ import type { z } from 'zod/v4'
 // Model Configuration
 // ============================================================================
 
-/** Model configuration for OpenCode. */
+/** Backend type for running agents. */
+export type BackendType = 'opencode' | 'claude-code'
+
+/** Model configuration for LLM backends. */
 export interface ModelConfig {
+  /** Backend to use (default: 'opencode'). */
+  backend?: BackendType
   providerID: string
   modelID: string
 }

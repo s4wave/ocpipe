@@ -87,6 +87,7 @@ export type { MockResponse } from './testing.js'
 // Types
 export type {
   // Core types
+  BackendType,
   ModelConfig,
   ExecutionContext,
   StepResult,

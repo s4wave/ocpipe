@@ -1,53 +1,37 @@
 /**
- * ocpipe OpenCode agent integration.
+ * ocpipe agent integration.
  *
- * Wraps the OpenCode CLI for running LLM agents with session management.
+ * Dispatches to OpenCode CLI or Claude Code SDK based on backend configuration.
  */
 
 import { spawn } from 'child_process'
-import { existsSync } from 'fs'
 import { mkdir, writeFile, unlink } from 'fs/promises'
 import { join } from 'path'
 import { PROJECT_ROOT, TMP_DIR } from './paths.js'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
 
-/** Find opencode binary from PATH, preferring non-node_modules locations */
-function findOpencode(): string | null {
-  const pathDirs = (process.env.PATH || '').split(':')
-
-  // First pass: look for opencode in non-node_modules directories
-  for (const dir of pathDirs) {
-    if (dir.includes('node_modules')) continue
-    const candidate = join(dir, 'opencode')
-    if (existsSync(candidate)) {
-      return candidate
-    }
-  }
-
-  // Second pass: check node_modules/.bin as fallback
-  for (const dir of pathDirs) {
-    if (!dir.includes('node_modules')) continue
-    const candidate = join(dir, 'opencode')
-    if (existsSync(candidate)) {
-      return candidate
-    }
-  }
-
-  return null
-}
-
-/** Get command and args to invoke opencode */
+/** Get command and args to invoke opencode from PATH */
 function getOpencodeCommand(args: string[]): { cmd: string; args: string[] } {
-  const opencode = findOpencode()
-  if (opencode) {
-    return { cmd: opencode, args }
-  }
-  // Fallback to bunx with ocpipe package (which has opencode-ai as dependency)
-  return { cmd: 'bunx', args: ['-p', 'ocpipe', 'opencode', ...args] }
+  return { cmd: 'opencode', args }
 }
 
-/** runAgent executes an OpenCode agent with a prompt, streaming output in real-time. */
+/** runAgent dispatches to the appropriate backend based on model configuration. */
 export async function runAgent(
+  options: RunAgentOptions,
+): Promise<RunAgentResult> {
+  const backend = options.model.backend ?? 'opencode'
+
+  if (backend === 'claude-code') {
+    // Dynamic import to avoid requiring @anthropic-ai/claude-agent-sdk when using opencode
+    const { runClaudeCodeAgent } = await import('./claude-code.js')
+    return runClaudeCodeAgent(options)
+  }
+
+  return runOpencodeAgent(options)
+}
+
+/** runOpencodeAgent executes an OpenCode agent with a prompt, streaming output in real-time. */
+async function runOpencodeAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
   const { prompt, agent, model, sessionId, timeoutSec = 300, workdir } = options
