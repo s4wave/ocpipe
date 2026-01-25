@@ -124,12 +124,33 @@ async function runOpencodeAgent(
       // Clean up prompt file
       await unlink(promptFile).catch(() => {})
 
+      const stderr = stderrChunks.join('').trim()
+
       if (code !== 0) {
-        const stderr = stderrChunks.join('').trim()
         const lastLines = stderr.split('\n').slice(-5).join('\n')
         const detail = lastLines ? `\n${lastLines}` : ''
         reject(new Error(`OpenCode exited with code ${code}${detail}`))
         return
+      }
+
+      // Check for OpenCode errors that exit with code 0 but produce no output
+      const knownErrors = [
+        { pattern: /ProviderModelNotFoundError/, message: 'Provider/model not found' },
+        { pattern: /ModelNotFoundError/, message: 'Model not found' },
+        { pattern: /ProviderNotFoundError/, message: 'Provider not found' },
+        { pattern: /API key.*not.*found/i, message: 'API key not configured' },
+        { pattern: /authentication.*failed/i, message: 'Authentication failed' },
+      ]
+
+      for (const { pattern, message } of knownErrors) {
+        if (pattern.test(stderr)) {
+          // Extract the relevant error lines
+          const errorLines = stderr.split('\n').filter(line =>
+            pattern.test(line) || line.includes('Error') || line.includes('error:')
+          ).slice(0, 5).join('\n')
+          reject(new Error(`OpenCode ${message}:\n${errorLines}`))
+          return
+        }
       }
 
       // Export session to get structured response
@@ -140,6 +161,13 @@ async function runOpencodeAgent(
         if (exported) {
           response = exported
         }
+      }
+
+      // Check for empty response with errors in stderr (likely a silent failure)
+      if (response.length === 0 && stderr.includes('Error')) {
+        const lastLines = stderr.split('\n').slice(-10).join('\n')
+        reject(new Error(`OpenCode returned empty response with errors:\n${lastLines}`))
+        return
       }
 
       const sessionStr = newSessionId || 'none'
