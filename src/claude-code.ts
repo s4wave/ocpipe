@@ -7,6 +7,8 @@
 import {
   unstable_v2_createSession,
   unstable_v2_resumeSession,
+  type HookCallback,
+  type PreToolUseHookInput,
   type SDKMessage,
   type SDKSessionOptions,
 } from '@anthropic-ai/claude-agent-sdk'
@@ -33,6 +35,29 @@ function getAssistantText(msg: SDKMessage): string | null {
   return textParts.join('')
 }
 
+/** logToolCall logs tool calls in a compact format during execution. */
+const logToolCall: HookCallback = async (input) => {
+  const preInput = input as PreToolUseHookInput
+  const name = preInput.tool_name
+  const toolInput = preInput.tool_input as Record<string, unknown>
+
+  if (name === 'Bash') {
+    const cmd = toolInput?.command as string
+    const preview = cmd?.split('\n')[0]?.slice(0, 80)
+    console.error(`\n[Bash] ${preview}${cmd?.length > 80 ? '...' : ''}`)
+  } else if (name === 'Read' || name === 'Write' || name === 'Edit') {
+    const path = toolInput?.file_path as string
+    console.error(`\n[${name}] ${path}`)
+  } else if (name === 'Glob' || name === 'Grep') {
+    const pattern = toolInput?.pattern as string
+    console.error(`\n[${name}] ${pattern}`)
+  } else {
+    console.error(`\n[${name}]`)
+  }
+
+  return {}
+}
+
 /** runClaudeCodeAgent executes a Claude Code agent with a prompt. */
 export async function runClaudeCodeAgent(
   options: RunAgentOptions,
@@ -49,6 +74,9 @@ export async function runClaudeCodeAgent(
   const sessionOptions: SDKSessionOptions = {
     model: modelStr,
     permissionMode,
+    hooks: {
+      PreToolUse: [{ hooks: [logToolCall] }],
+    },
     // bypassPermissions requires explicit opt-in
     ...(permissionMode === 'bypassPermissions' &&
       claudeCode?.dangerouslySkipPermissions && {
