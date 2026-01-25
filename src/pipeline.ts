@@ -31,8 +31,9 @@ export class Pipeline<S extends BaseState> {
       sessionId: undefined,
       defaultModel: config.defaultModel,
       defaultAgent: config.defaultAgent,
-      timeoutSec: config.timeoutSec ?? 300,
+      timeoutSec: config.timeoutSec ?? 600,
       workdir: config.workdir,
+      claudeCode: config.claudeCode,
     }
   }
 

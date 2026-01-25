@@ -34,7 +34,7 @@ export async function runAgent(
 async function runOpencodeAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
-  const { prompt, agent, model, sessionId, timeoutSec = 300, workdir } = options
+  const { prompt, agent, model, sessionId, timeoutSec = 600, workdir } = options
 
   const modelStr = `${model.providerID}/${model.modelID}`
   const sessionInfo = sessionId ? `[session:${sessionId}]` : '[new session]'

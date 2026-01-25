@@ -88,6 +88,8 @@ export type { MockResponse } from './testing.js'
 export type {
   // Core types
   BackendType,
+  PermissionMode,
+  ClaudeCodeOptions,
   ModelConfig,
   ExecutionContext,
   StepResult,

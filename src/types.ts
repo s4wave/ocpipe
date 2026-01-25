@@ -11,6 +11,21 @@ import type { z } from 'zod/v4'
 /** Backend type for running agents. */
 export type BackendType = 'opencode' | 'claude-code'
 
+/** Permission mode for Claude Code sessions. */
+export type PermissionMode =
+  | 'default'
+  | 'acceptEdits'
+  | 'bypassPermissions'
+  | 'plan'
+
+/** Claude Code specific session options. */
+export interface ClaudeCodeOptions {
+  /** Permission mode (default: 'acceptEdits'). */
+  permissionMode?: PermissionMode
+  /** Required when using 'bypassPermissions' mode. */
+  dangerouslySkipPermissions?: boolean
+}
+
 /** Model configuration for LLM backends. */
 export interface ModelConfig {
   /** Backend to use (default: 'opencode'). */
@@ -35,6 +50,8 @@ export interface ExecutionContext {
   timeoutSec: number
   /** Working directory for opencode (where .opencode/agents/ lives). */
   workdir?: string
+  /** Claude Code specific options. */
+  claudeCode?: ClaudeCodeOptions
 }
 
 // ============================================================================
@@ -249,6 +266,8 @@ export interface PipelineConfig {
   timeoutSec?: number
   /** Working directory for opencode (where .opencode/agents/ lives). */
   workdir?: string
+  /** Claude Code specific options. */
+  claudeCode?: ClaudeCodeOptions
 }
 
 /** Options for running a pipeline step. */
@@ -281,6 +300,8 @@ export interface RunAgentOptions {
   timeoutSec?: number
   /** Working directory for opencode (where .opencode/agents/ lives). */
   workdir?: string
+  /** Claude Code specific options. */
+  claudeCode?: ClaudeCodeOptions
 }
 
 /** Result from running an OpenCode agent. */

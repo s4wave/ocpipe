@@ -8,6 +8,7 @@ import {
   unstable_v2_createSession,
   unstable_v2_resumeSession,
   type SDKMessage,
+  type SDKSessionOptions,
 } from '@anthropic-ai/claude-agent-sdk'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
 
@@ -36,22 +37,34 @@ function getAssistantText(msg: SDKMessage): string | null {
 export async function runClaudeCodeAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
-  const { prompt, model, sessionId, timeoutSec = 300 } = options
+  const { prompt, model, sessionId, timeoutSec = 600, claudeCode } = options
 
   // Claude Code understands simple names: opus, sonnet, haiku
   const modelStr = normalizeModelId(model.modelID)
   const sessionInfo = sessionId ? `[session:${sessionId}]` : '[new session]'
   const promptPreview = prompt.slice(0, 50).replace(/\n/g, ' ')
 
+  // Build session options with configurable permission mode (default: acceptEdits)
+  const permissionMode = claudeCode?.permissionMode ?? 'acceptEdits'
+  const sessionOptions: SDKSessionOptions = {
+    model: modelStr,
+    permissionMode,
+    // bypassPermissions requires explicit opt-in
+    ...(permissionMode === 'bypassPermissions' &&
+      claudeCode?.dangerouslySkipPermissions && {
+        allowDangerouslySkipPermissions: true,
+      }),
+  }
+
   console.error(
-    `\n>>> Claude Code [${modelStr}] ${sessionInfo}: ${promptPreview}...`,
+    `\n>>> Claude Code [${modelStr}] [${permissionMode}] ${sessionInfo}: ${promptPreview}...`,
   )
 
   // Create or resume session
   const session =
     sessionId ?
-      unstable_v2_resumeSession(sessionId, { model: modelStr })
-    : unstable_v2_createSession({ model: modelStr })
+      unstable_v2_resumeSession(sessionId, sessionOptions)
+    : unstable_v2_createSession(sessionOptions)
 
   try {
     // Send the prompt

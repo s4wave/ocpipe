@@ -68,6 +68,18 @@ const pipeline = new Pipeline({
   name: 'my-pipeline',
   defaultModel: { backend: 'claude-code', providerID: 'anthropic', modelID: 'claude-sonnet-4-20250514' },
   defaultAgent: 'default',
+  // Permission mode controls what Claude Code can do without prompting
+  // Options: 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan'
+  claudeCode: { permissionMode: 'acceptEdits' }, // default: auto-approve file writes
+}, createBaseState)
+
+// To bypass all permission prompts (use with caution):
+const pipeline = new Pipeline({
+  ...config,
+  claudeCode: {
+    permissionMode: 'bypassPermissions',
+    dangerouslySkipPermissions: true, // required safety flag
+  },
 }, createBaseState)
 ```
 
