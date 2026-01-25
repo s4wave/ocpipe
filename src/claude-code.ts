@@ -11,6 +11,15 @@ import {
 } from '@anthropic-ai/claude-agent-sdk'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
 
+/** Normalize model ID to Claude Code format (opus, sonnet, haiku). */
+function normalizeModelId(modelId: string): string {
+  const lower = modelId.toLowerCase()
+  if (lower.includes('opus')) return 'opus'
+  if (lower.includes('sonnet')) return 'sonnet'
+  if (lower.includes('haiku')) return 'haiku'
+  return modelId
+}
+
 /** Extract text from assistant messages. */
 function getAssistantText(msg: SDKMessage): string | null {
   if (msg.type !== 'assistant') return null
@@ -29,8 +38,8 @@ export async function runClaudeCodeAgent(
 ): Promise<RunAgentResult> {
   const { prompt, model, sessionId, timeoutSec = 300 } = options
 
-  // Claude Agent SDK only uses modelID, not providerID
-  const modelStr = model.modelID
+  // Claude Code understands simple names: opus, sonnet, haiku
+  const modelStr = normalizeModelId(model.modelID)
   const sessionInfo = sessionId ? `[session:${sessionId}]` : '[new session]'
   const promptPreview = prompt.slice(0, 50).replace(/\n/g, ' ')
 
