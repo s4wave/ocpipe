@@ -53,6 +53,8 @@ async function runOpencodeAgent(
 
   const args = [
     'run',
+    '--dir',
+    cwd,
     '--format',
     'default',
     '--agent',
@@ -69,6 +71,7 @@ async function runOpencodeAgent(
 
   return new Promise((resolve, reject) => {
     const opencodeCmd = getOpencodeCommand(args)
+    console.error(`[DEBUG] Running: ${opencodeCmd.cmd} ${opencodeCmd.args.join(' ')}`)
     const proc = spawn(opencodeCmd.cmd, opencodeCmd.args, {
       cwd,
       stdio: ['ignore', 'pipe', 'pipe'],

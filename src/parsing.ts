@@ -307,33 +307,69 @@ export function zodTypeToString(zodType: z.ZodType): string {
   return 'unknown'
 }
 
+/**
+ * extractBalancedObject extracts a balanced JSON object starting at startIdx.
+ * Returns the object substring or null if unbalanced.
+ */
+function extractBalancedObject(text: string, startIdx: number): string | null {
+  if (startIdx === -1 || startIdx >= text.length || text[startIdx] !== '{') {
+    return null
+  }
+
+  let braceCount = 0
+  let endIdx = startIdx
+  for (let i = startIdx; i < text.length; i++) {
+    if (text[i] === '{') braceCount++
+    else if (text[i] === '}') {
+      braceCount--
+      if (braceCount === 0) {
+        endIdx = i + 1
+        break
+      }
+    }
+  }
+
+  if (endIdx > startIdx && braceCount === 0) {
+    return text.slice(startIdx, endIdx)
+  }
+  return null
+}
+
 /** extractJsonString finds and extracts JSON from a response string. */
 export function extractJsonString(response: string): string | null {
   // Try to find JSON in code blocks first
   const codeBlockMatch = response.match(/```(?:json)?\s*(\{[\s\S]*?)```/)
   if (codeBlockMatch?.[1]) {
-    return codeBlockMatch[1].trim()
+    const candidate = codeBlockMatch[1].trim()
+    // Validate it's actually parseable JSON
+    try {
+      JSON.parse(candidate)
+      return candidate
+    } catch {
+      // Code block content is malformed, try other methods
+    }
   }
 
-  // Try to find raw JSON by counting braces
-  const startIdx = response.indexOf('{')
-  if (startIdx !== -1) {
-    let braceCount = 0
-    let endIdx = startIdx
-    for (let i = startIdx; i < response.length; i++) {
-      if (response[i] === '{') braceCount++
-      else if (response[i] === '}') {
-        braceCount--
-        if (braceCount === 0) {
-          endIdx = i + 1
-          break
-        }
+  // Try to find raw JSON by counting braces, starting from each { position
+  // This handles cases where the model started outputting JSON, then restarted
+  // (e.g., "{"response":{"embeds":[{"title":"Haze{"response":{"embeds":[...]}}}")
+  // We try each { position until we find one that produces valid JSON
+  let searchFrom = 0
+  while (searchFrom < response.length) {
+    const startIdx = response.indexOf('{', searchFrom)
+    if (startIdx === -1) break
+
+    const candidate = extractBalancedObject(response, startIdx)
+    if (candidate) {
+      try {
+        JSON.parse(candidate)
+        return candidate
+      } catch {
+        // This { position produced invalid JSON, try the next one
       }
     }
 
-    if (endIdx > startIdx) {
-      return response.slice(startIdx, endIdx)
-    }
+    searchFrom = startIdx + 1
   }
 
   return null
