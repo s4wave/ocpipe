@@ -36,6 +36,9 @@ async function runOpencodeAgent(
 ): Promise<RunAgentResult> {
   const { prompt, agent, model, sessionId, timeoutSec = 600, workdir } = options
 
+  if (!model.providerID) {
+    throw new Error('providerID is required for OpenCode backend')
+  }
   const modelStr = `${model.providerID}/${model.modelID}`
   const sessionInfo = sessionId ? `[session:${sessionId}]` : '[new session]'
   const promptPreview = prompt.slice(0, 50).replace(/\n/g, ' ')
@@ -71,7 +74,9 @@ async function runOpencodeAgent(
 
   return new Promise((resolve, reject) => {
     const opencodeCmd = getOpencodeCommand(args)
-    console.error(`[DEBUG] Running: ${opencodeCmd.cmd} ${opencodeCmd.args.join(' ')}`)
+    console.error(
+      `[DEBUG] Running: ${opencodeCmd.cmd} ${opencodeCmd.args.join(' ')}`,
+    )
     const proc = spawn(opencodeCmd.cmd, opencodeCmd.args, {
       cwd,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -135,19 +140,32 @@ async function runOpencodeAgent(
 
       // Check for OpenCode errors that exit with code 0 but produce no output
       const knownErrors = [
-        { pattern: /ProviderModelNotFoundError/, message: 'Provider/model not found' },
+        {
+          pattern: /ProviderModelNotFoundError/,
+          message: 'Provider/model not found',
+        },
         { pattern: /ModelNotFoundError/, message: 'Model not found' },
         { pattern: /ProviderNotFoundError/, message: 'Provider not found' },
         { pattern: /API key.*not.*found/i, message: 'API key not configured' },
-        { pattern: /authentication.*failed/i, message: 'Authentication failed' },
+        {
+          pattern: /authentication.*failed/i,
+          message: 'Authentication failed',
+        },
       ]
 
       for (const { pattern, message } of knownErrors) {
         if (pattern.test(stderr)) {
           // Extract the relevant error lines
-          const errorLines = stderr.split('\n').filter(line =>
-            pattern.test(line) || line.includes('Error') || line.includes('error:')
-          ).slice(0, 5).join('\n')
+          const errorLines = stderr
+            .split('\n')
+            .filter(
+              (line) =>
+                pattern.test(line) ||
+                line.includes('Error') ||
+                line.includes('error:'),
+            )
+            .slice(0, 5)
+            .join('\n')
           reject(new Error(`OpenCode ${message}:\n${errorLines}`))
           return
         }
@@ -166,7 +184,11 @@ async function runOpencodeAgent(
       // Check for empty response with errors in stderr (likely a silent failure)
       if (response.length === 0 && stderr.includes('Error')) {
         const lastLines = stderr.split('\n').slice(-10).join('\n')
-        reject(new Error(`OpenCode returned empty response with errors:\n${lastLines}`))
+        reject(
+          new Error(
+            `OpenCode returned empty response with errors:\n${lastLines}`,
+          ),
+        )
         return
       }
 

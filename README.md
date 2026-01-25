@@ -54,33 +54,26 @@ ocpipe supports two backends for running LLM agents:
 **OpenCode** (default) - Requires `opencode` CLI in your PATH. Supports 75+ providers.
 
 ```typescript
-const pipeline = new Pipeline({
-  name: 'my-pipeline',
-  defaultModel: { providerID: 'anthropic', modelID: 'claude-sonnet-4-20250514' },
-  defaultAgent: 'default',
-}, createBaseState)
+const pipeline = new Pipeline(
+  {
+    name: 'my-pipeline',
+    defaultModel: {
+      providerID: 'anthropic',
+      modelID: 'claude-sonnet-4-20250514',
+    },
+    defaultAgent: 'default',
+  },
+  createBaseState,
+)
 ```
 
 **Claude Code** - Uses `@anthropic-ai/claude-agent-sdk`. Install as a peer dependency.
 
 ```typescript
-const pipeline = new Pipeline({
-  name: 'my-pipeline',
-  defaultModel: { backend: 'claude-code', providerID: 'anthropic', modelID: 'claude-sonnet-4-20250514' },
-  defaultAgent: 'default',
-  // Permission mode controls what Claude Code can do without prompting
-  // Options: 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan'
-  claudeCode: { permissionMode: 'acceptEdits' }, // default: auto-approve file writes
-}, createBaseState)
-
-// To bypass all permission prompts (use with caution):
-const pipeline = new Pipeline({
-  ...config,
-  claudeCode: {
-    permissionMode: 'bypassPermissions',
-    dangerouslySkipPermissions: true, // required safety flag
-  },
-}, createBaseState)
+// modelID: 'opus', 'sonnet', or 'haiku'
+defaultModel: { backend: 'claude-code', modelID: 'sonnet' },
+// permissionMode: 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan'
+claudeCode: { permissionMode: 'acceptEdits' },
 ```
 
 ### Requirements

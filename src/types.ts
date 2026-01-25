@@ -30,7 +30,8 @@ export interface ClaudeCodeOptions {
 export interface ModelConfig {
   /** Backend to use (default: 'opencode'). */
   backend?: BackendType
-  providerID: string
+  /** Provider ID (required for OpenCode, ignored for Claude Code). */
+  providerID?: string
   modelID: string
 }
 
