@@ -77,6 +77,7 @@ export class Predict<S extends AnySignature> {
       timeoutSec: ctx.timeoutSec,
       workdir: ctx.workdir,
       claudeCode: ctx.claudeCode,
+      signal: ctx.signal,
     })
 
     // Update context with new session ID for continuity
@@ -206,6 +207,7 @@ export class Predict<S extends AnySignature> {
         timeoutSec: 60,
         workdir: ctx.workdir,
         claudeCode: ctx.claudeCode,
+        signal: ctx.signal,
       })
 
       // Try to parse the repaired JSON
@@ -282,6 +284,7 @@ export class Predict<S extends AnySignature> {
         timeoutSec: 60, // Short timeout for simple patches
         workdir: ctx.workdir,
         claudeCode: ctx.claudeCode,
+        signal: ctx.signal,
       })
 
       // Extract and apply the patch based on method

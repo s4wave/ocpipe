@@ -53,6 +53,8 @@ export interface ExecutionContext {
   workdir?: string
   /** Claude Code specific options. */
   claudeCode?: ClaudeCodeOptions
+  /** AbortSignal for cancelling requests. When aborted, kills subprocesses. */
+  signal?: AbortSignal
 }
 
 // ============================================================================
@@ -303,6 +305,8 @@ export interface RunAgentOptions {
   workdir?: string
   /** Claude Code specific options. */
   claudeCode?: ClaudeCodeOptions
+  /** AbortSignal for cancelling the request. When aborted, kills the subprocess. */
+  signal?: AbortSignal
 }
 
 /** Result from running an OpenCode agent. */

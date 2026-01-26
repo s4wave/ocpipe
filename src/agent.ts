@@ -34,7 +34,7 @@ export async function runAgent(
 async function runOpencodeAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
-  const { prompt, agent, model, sessionId, timeoutSec = 600, workdir } = options
+  const { prompt, agent, model, sessionId, timeoutSec = 600, workdir, signal } = options
 
   if (!model.providerID) {
     throw new Error('providerID is required for OpenCode backend')
@@ -46,6 +46,11 @@ async function runOpencodeAgent(
   console.error(
     `\n>>> OpenCode [${agent}] [${modelStr}] ${sessionInfo}: ${promptPreview}...`,
   )
+
+  // Check if already aborted
+  if (signal?.aborted) {
+    throw new Error('Request aborted')
+  }
 
   // Write prompt to .opencode/prompts/ within the working directory
   const cwd = workdir ?? PROJECT_ROOT
@@ -85,6 +90,22 @@ async function runOpencodeAgent(
     let newSessionId = sessionId || ''
     const stdoutChunks: string[] = []
     const stderrChunks: string[] = []
+    let aborted = false
+
+    // Handle abort signal - kill subprocess when aborted
+    const abortHandler = async () => {
+      if (aborted) return
+      aborted = true
+      console.error(`\n[abort] Killing OpenCode subprocess...`)
+      proc.kill('SIGTERM')
+      // Give it a moment to clean up, then force kill
+      setTimeout(() => {
+        if (!proc.killed) proc.kill('SIGKILL')
+      }, 1000)
+      await unlink(promptFile).catch(() => {})
+      reject(new Error('Request aborted'))
+    }
+    signal?.addEventListener('abort', abortHandler, { once: true })
 
     // Stream stderr in real-time (OpenCode progress output)
     proc.stderr.on('data', (data: Buffer) => {
@@ -125,6 +146,10 @@ async function runOpencodeAgent(
 
     proc.on('close', async (code) => {
       if (timeout) clearTimeout(timeout)
+      signal?.removeEventListener('abort', abortHandler)
+
+      // If aborted, we already rejected
+      if (aborted) return
 
       // Clean up prompt file
       await unlink(promptFile).catch(() => {})

@@ -62,7 +62,12 @@ const logToolCall: HookCallback = async (input) => {
 export async function runClaudeCodeAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
-  const { prompt, model, sessionId, timeoutSec = 600, claudeCode } = options
+  const { prompt, model, sessionId, timeoutSec = 600, claudeCode, signal } = options
+
+  // Check if already aborted
+  if (signal?.aborted) {
+    throw new Error('Request aborted')
+  }
 
   // Claude Code understands simple names: opus, sonnet, haiku
   const modelStr = normalizeModelId(model.modelID)
@@ -94,6 +99,13 @@ export async function runClaudeCodeAgent(
       unstable_v2_resumeSession(sessionId, sessionOptions)
     : unstable_v2_createSession(sessionOptions)
 
+  // Handle abort signal
+  const abortHandler = () => {
+    console.error(`\n[abort] Closing Claude Code session...`)
+    session.close()
+  }
+  signal?.addEventListener('abort', abortHandler, { once: true })
+
   try {
     // Send the prompt
     await session.send(prompt)
@@ -113,6 +125,15 @@ export async function runClaudeCodeAgent(
         })
       : null
 
+    // Set up abort promise
+    const abortPromise = signal ?
+      new Promise<never>((_, reject) => {
+        signal.addEventListener('abort', () => {
+          reject(new Error('Request aborted'))
+        }, { once: true })
+      })
+    : null
+
     // Stream the response
     const streamPromise = (async () => {
       for await (const msg of session.stream()) {
@@ -129,12 +150,11 @@ export async function runClaudeCodeAgent(
       }
     })()
 
-    // Race between stream and timeout
-    if (timeoutPromise) {
-      await Promise.race([streamPromise, timeoutPromise])
-    } else {
-      await streamPromise
-    }
+    // Race between stream, timeout, and abort
+    const promises: Promise<void | never>[] = [streamPromise]
+    if (timeoutPromise) promises.push(timeoutPromise)
+    if (abortPromise) promises.push(abortPromise)
+    await Promise.race(promises)
 
     const response = textParts.join('')
     const sessionStr = newSessionId || 'none'
@@ -147,6 +167,7 @@ export async function runClaudeCodeAgent(
       sessionId: newSessionId,
     }
   } finally {
+    signal?.removeEventListener('abort', abortHandler)
     session.close()
   }
 }
