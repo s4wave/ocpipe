@@ -14,6 +14,37 @@ import {
 } from '@anthropic-ai/claude-agent-sdk'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
 
+/** ANSI color codes for terminal output. */
+const Style = {
+  TEXT_HIGHLIGHT_BOLD: '\x1b[96m\x1b[1m', // Cyan (Read)
+  TEXT_DIM: '\x1b[90m', // Gray (dimmed type text)
+  TEXT_NORMAL: '\x1b[0m', // Reset
+  TEXT_DANGER_BOLD: '\x1b[91m\x1b[1m', // Red (Bash)
+  TEXT_SUCCESS_BOLD: '\x1b[92m\x1b[1m', // Green (Edit, Write)
+  TEXT_INFO_BOLD: '\x1b[94m\x1b[1m', // Blue (Glob, Grep)
+}
+
+/** Map tool names to their display colors. */
+const TOOL_COLORS: Record<string, string> = {
+  Bash: Style.TEXT_DANGER_BOLD,
+  Edit: Style.TEXT_SUCCESS_BOLD,
+  Write: Style.TEXT_SUCCESS_BOLD,
+  Read: Style.TEXT_HIGHLIGHT_BOLD,
+  Glob: Style.TEXT_INFO_BOLD,
+  Grep: Style.TEXT_INFO_BOLD,
+}
+
+/** Print a tool event with colored pipe prefix. */
+function printToolEvent(color: string, type: string, title: string): void {
+  const line = [
+    color + '|',
+    Style.TEXT_NORMAL + Style.TEXT_DIM + ` ${type.padEnd(7)}`,
+    '',
+    Style.TEXT_NORMAL + title,
+  ].join(' ')
+  console.error(line)
+}
+
 /** Normalize model ID to Claude Code format (opus, sonnet, haiku). */
 function normalizeModelId(modelId: string): string {
   const lower = modelId.toLowerCase()
@@ -40,19 +71,20 @@ const logToolCall: HookCallback = async (input) => {
   const preInput = input as PreToolUseHookInput
   const name = preInput.tool_name
   const toolInput = preInput.tool_input as Record<string, unknown>
+  const color = TOOL_COLORS[name] ?? Style.TEXT_DIM
 
   if (name === 'Bash') {
     const cmd = toolInput?.command as string
     const preview = cmd?.split('\n')[0]?.slice(0, 80)
-    console.error(`\n[Bash] ${preview}${cmd?.length > 80 ? '...' : ''}`)
+    printToolEvent(color, name, preview + (cmd?.length > 80 ? '...' : ''))
   } else if (name === 'Read' || name === 'Write' || name === 'Edit') {
     const path = toolInput?.file_path as string
-    console.error(`\n[${name}] ${path}`)
+    printToolEvent(color, name, path)
   } else if (name === 'Glob' || name === 'Grep') {
     const pattern = toolInput?.pattern as string
-    console.error(`\n[${name}] ${pattern}`)
+    printToolEvent(color, name, pattern)
   } else {
-    console.error(`\n[${name}]`)
+    printToolEvent(color, name, '')
   }
 
   return {}
