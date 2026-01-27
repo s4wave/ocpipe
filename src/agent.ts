@@ -61,8 +61,6 @@ async function runOpencodeAgent(
 
   const args = [
     'run',
-    '--dir',
-    cwd,
     '--format',
     'default',
     '--agent',
