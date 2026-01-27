@@ -2,18 +2,26 @@
  * Hello World example runner.
  *
  * Demonstrates running an ocpipe module in a pipeline.
+ *
+ * Usage:
+ *   npx tsx example/index.ts              # Use opencode backend
+ *   npx tsx example/index.ts --claude-code # Use claude-code backend
  */
 
 import { Pipeline, createBaseState } from '../src/index.js'
 import { Greeter } from './module.js'
+
+const useClaudeCode = process.argv.includes('--claude-code')
 
 async function main() {
   // Create a pipeline with configuration
   const pipeline = new Pipeline(
     {
       name: 'hello-world',
-      defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
-      defaultAgent: 'default',
+      defaultModel: useClaudeCode
+        ? { backend: 'claude-code', modelID: 'sonnet' }
+        : { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
+      defaultAgent: useClaudeCode ? 'claude-code' : 'default',
       checkpointDir: './ckpt',
       logDir: './logs',
     },
