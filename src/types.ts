@@ -24,6 +24,8 @@ export interface ClaudeCodeOptions {
   permissionMode?: PermissionMode
   /** Required when using 'bypassPermissions' mode. */
   dangerouslySkipPermissions?: boolean
+  /** Path to Claude Code executable (default: auto-detected). */
+  pathToClaudeCodeExecutable?: string
 }
 
 /** Model configuration for LLM backends. */

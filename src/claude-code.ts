@@ -94,7 +94,14 @@ const logToolCall: HookCallback = async (input) => {
 export async function runClaudeCodeAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
-  const { prompt, model, sessionId, timeoutSec = 600, claudeCode, signal } = options
+  const {
+    prompt,
+    model,
+    sessionId,
+    timeoutSec = 600,
+    claudeCode,
+    signal,
+  } = options
 
   // Check if already aborted
   if (signal?.aborted) {
@@ -119,6 +126,10 @@ export async function runClaudeCodeAgent(
       claudeCode?.dangerouslySkipPermissions && {
         allowDangerouslySkipPermissions: true,
       }),
+    // Pass through custom executable path if provided
+    ...(claudeCode?.pathToClaudeCodeExecutable && {
+      pathToClaudeCodeExecutable: claudeCode.pathToClaudeCodeExecutable,
+    }),
   }
 
   console.error(
@@ -158,13 +169,18 @@ export async function runClaudeCodeAgent(
       : null
 
     // Set up abort promise
-    const abortPromise = signal ?
-      new Promise<never>((_, reject) => {
-        signal.addEventListener('abort', () => {
-          reject(new Error('Request aborted'))
-        }, { once: true })
-      })
-    : null
+    const abortPromise =
+      signal ?
+        new Promise<never>((_, reject) => {
+          signal.addEventListener(
+            'abort',
+            () => {
+              reject(new Error('Request aborted'))
+            },
+            { once: true },
+          )
+        })
+      : null
 
     // Stream the response
     const streamPromise = (async () => {
