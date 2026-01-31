@@ -80,8 +80,8 @@ claudeCode: { permissionMode: 'acceptEdits' },
 
 **For OpenCode backend:** Currently requires [this OpenCode fork](https://github.com/paralin/opencode). Once the following PRs are merged, the official release will work:
 
-- [#5426](https://github.com/anomalyco/opencode/pull/5426) - Adds `--prompt-file` flag
-- [#5339](https://github.com/anomalyco/opencode/pull/5339) - Session export fixes
+- [#5426](https://github.com/anomalyco/opencode/pull/5426) - Adds session export command
+- [#5339](https://github.com/anomalyco/opencode/pull/5339) - Adds `--tools` flag to limit available tools (optional)
 
 **For Claude Code backend:** Install the SDK as a peer dependency:
 
