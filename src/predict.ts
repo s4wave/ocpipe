@@ -204,7 +204,7 @@ export class Predict<S extends AnySignature> {
         model: correctionModel ?? ctx.defaultModel,
         sessionId: correctionModel ? undefined : sessionId,
         agent: ctx.defaultAgent,
-        timeoutSec: 60,
+        timeoutSec: ctx.timeoutSec,
         workdir: ctx.workdir,
         claudeCode: ctx.claudeCode,
         signal: ctx.signal,
@@ -281,7 +281,7 @@ export class Predict<S extends AnySignature> {
         model: correctionModel ?? ctx.defaultModel,
         sessionId: correctionModel ? undefined : sessionId,
         agent: ctx.defaultAgent,
-        timeoutSec: 60, // Short timeout for simple patches
+        timeoutSec: ctx.timeoutSec,
         workdir: ctx.workdir,
         claudeCode: ctx.claudeCode,
         signal: ctx.signal,
