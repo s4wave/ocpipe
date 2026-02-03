@@ -149,6 +149,9 @@ export async function runClaudeCodeAgent(
   }
   signal?.addEventListener('abort', abortHandler, { once: true })
 
+  // Declare outside try block so finally can access it
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+
   try {
     // Send the prompt
     await session.send(prompt)
@@ -157,11 +160,11 @@ export async function runClaudeCodeAgent(
     const textParts: string[] = []
     let newSessionId = sessionId || ''
 
-    // Set up timeout
+    // Set up timeout (store ID so we can clear it later)
     const timeoutPromise =
       timeoutSec > 0 ?
         new Promise<never>((_, reject) => {
-          setTimeout(() => {
+          timeoutId = setTimeout(() => {
             session.close()
             reject(new Error(`Timeout after ${timeoutSec}s`))
           }, timeoutSec * 1000)
@@ -204,6 +207,9 @@ export async function runClaudeCodeAgent(
     if (abortPromise) promises.push(abortPromise)
     await Promise.race(promises)
 
+    // Clear the timeout to prevent it from keeping the event loop alive
+    if (timeoutId) clearTimeout(timeoutId)
+
     const response = textParts.join('')
     const sessionStr = newSessionId || 'none'
     console.error(
@@ -216,6 +222,7 @@ export async function runClaudeCodeAgent(
     }
   } finally {
     signal?.removeEventListener('abort', abortHandler)
+    if (timeoutId) clearTimeout(timeoutId)
     session.close()
   }
 }
