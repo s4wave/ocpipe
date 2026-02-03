@@ -216,6 +216,11 @@ export async function runClaudeCodeAgent(
       `\n<<< Claude Code done (${response.length} chars) [session:${sessionStr}]`,
     )
 
+    // Detect rate limit errors in the response
+    if (response.includes("You've hit your limit")) {
+      throw new Error('Claude Code rate limit exceeded')
+    }
+
     return {
       text: response,
       sessionId: newSessionId,
