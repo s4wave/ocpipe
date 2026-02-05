@@ -34,8 +34,14 @@ const TOOL_COLORS: Record<string, string> = {
   Grep: Style.TEXT_INFO_BOLD,
 }
 
+/** Track whether the last stderr write ended with a newline. */
+let lastOutputEndedWithNewline = true
+
 /** Print a tool event with colored pipe prefix. */
 function printToolEvent(color: string, type: string, title: string): void {
+  if (!lastOutputEndedWithNewline) {
+    process.stderr.write('\n')
+  }
   const line = [
     color + '|',
     Style.TEXT_NORMAL + Style.TEXT_DIM + ` ${type.padEnd(7)}`,
@@ -197,6 +203,7 @@ export async function runClaudeCodeAgent(
         if (text) {
           textParts.push(text)
           process.stderr.write(text)
+          lastOutputEndedWithNewline = text.endsWith('\n')
         }
       }
     })()
