@@ -4,6 +4,10 @@
  * Uses the Claude Agent SDK v2 for running LLM agents with session management.
  */
 
+import { execSync } from 'child_process'
+import { existsSync } from 'fs'
+import { join } from 'path'
+import { homedir } from 'os'
 import {
   unstable_v2_createSession,
   unstable_v2_resumeSession,
@@ -49,6 +53,27 @@ function printToolEvent(color: string, type: string, title: string): void {
     Style.TEXT_NORMAL + title,
   ].join(' ')
   console.error(line)
+}
+
+/** Resolve the Claude Code executable path.
+ * Priority: 1) explicit option, 2) `which claude` from PATH, 3) common default paths. */
+function resolveClaudeCodePath(explicit?: string): string | undefined {
+  if (explicit) return explicit
+
+  try {
+    const found = execSync('which claude', { encoding: 'utf8', timeout: 3000 }).trim()
+    if (found) return found
+  } catch {}
+
+  const defaults = [
+    join(homedir(), '.local', 'bin', 'claude'),
+    '/usr/local/bin/claude',
+  ]
+  for (const p of defaults) {
+    if (existsSync(p)) return p
+  }
+
+  return undefined
 }
 
 /** Normalize model ID to Claude Code format (opus, sonnet, haiku). */
@@ -132,10 +157,11 @@ export async function runClaudeCodeAgent(
       claudeCode?.dangerouslySkipPermissions && {
         allowDangerouslySkipPermissions: true,
       }),
-    // Pass through custom executable path if provided
-    ...(claudeCode?.pathToClaudeCodeExecutable && {
-      pathToClaudeCodeExecutable: claudeCode.pathToClaudeCodeExecutable,
-    }),
+    // Resolve executable path: explicit option > PATH lookup > default locations
+    ...(() => {
+      const resolved = resolveClaudeCodePath(claudeCode?.pathToClaudeCodeExecutable)
+      return resolved ? { pathToClaudeCodeExecutable: resolved } : {}
+    })(),
   }
 
   console.error(
