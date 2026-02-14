@@ -5,7 +5,7 @@
  */
 
 import { execSync } from 'child_process'
-import { existsSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
 import {
@@ -85,6 +85,21 @@ function normalizeModelId(modelId: string): string {
   return modelId
 }
 
+/** loadAgentDefinition loads an OpenCode agent definition file and extracts the
+ * markdown body (stripping the YAML frontmatter) for use as a system prompt. */
+function loadAgentDefinition(agent: string, workdir?: string): string | undefined {
+  if (!agent || !workdir) return undefined
+
+  const agentPath = join(workdir, '.opencode', 'agents', `${agent}.md`)
+  if (!existsSync(agentPath)) return undefined
+
+  const content = readFileSync(agentPath, 'utf8')
+
+  // Strip YAML frontmatter (--- delimited block at the start).
+  const stripped = content.replace(/^---\n[\s\S]*?\n---\n*/, '')
+  return stripped.trim() || undefined
+}
+
 /** Extract text from assistant messages. */
 function getAssistantText(msg: SDKMessage): string | null {
   if (msg.type !== 'assistant') return null
@@ -127,9 +142,11 @@ export async function runClaudeCodeAgent(
 ): Promise<RunAgentResult> {
   const {
     prompt,
+    agent,
     model,
     sessionId,
     timeoutSec = 600,
+    workdir,
     claudeCode,
     signal,
   } = options
@@ -146,9 +163,20 @@ export async function runClaudeCodeAgent(
 
   // Build session options with configurable permission mode (default: acceptEdits)
   const permissionMode = claudeCode?.permissionMode ?? 'acceptEdits'
+
+  // Resolve system prompt: explicit option > agent definition file > none
+  const systemPrompt = claudeCode?.systemPrompt ?? loadAgentDefinition(agent, workdir)
+
   const sessionOptions: SDKSessionOptions = {
     model: modelStr,
     permissionMode,
+    ...(workdir && { cwd: workdir }),
+    ...(systemPrompt && { systemPrompt }),
+    // Enable session persistence so close+resume works.
+    // The v2 SDK defaults persistSession to false, unlike v1 which defaults to true.
+    // Without this, session.close() destroys the session and resumeSession() fails
+    // with "No conversation found with session ID".
+    ...({ persistSession: true }),
     hooks: {
       PreToolUse: [{ hooks: [logToolCall] }],
     },

@@ -26,6 +26,11 @@ export interface ClaudeCodeOptions {
   dangerouslySkipPermissions?: boolean
   /** Path to Claude Code executable (default: auto-detected). */
   pathToClaudeCodeExecutable?: string
+  /**
+   * System prompt for the Claude Code session.
+   * Can be a full string or use the preset format with append.
+   */
+  systemPrompt?: string | { type: 'preset'; preset: 'claude_code'; append: string }
 }
 
 /** Model configuration for LLM backends. */
