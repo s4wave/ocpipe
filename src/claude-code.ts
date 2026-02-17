@@ -68,7 +68,7 @@ function resolveClaudeCodePath(explicit?: string): string | undefined {
   try {
     const found = execSync('which claude', { encoding: 'utf8', timeout: 3000 }).trim()
     if (found) return found
-  } catch {}
+  } catch { /* which not found or timed out — fall through to defaults */ }
 
   const defaults = [
     join(homedir(), '.local', 'bin', 'claude'),
