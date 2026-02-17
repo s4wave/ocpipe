@@ -6,7 +6,7 @@
  * naturally when the generator completes, giving it time to persist session data.
  *
  * See: https://github.com/s4wave/ocpipe/issues/10
- * See: https://github.com/anthropics/anthropic-sdk-typescript/issues/911
+ * See: https://github.com/anthropics/claude-agent-sdk-typescript/issues/177
  *
  * Test flow:
  *   1. Send a first query, capture session_id

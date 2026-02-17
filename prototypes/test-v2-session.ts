@@ -7,7 +7,7 @@
  * may kill the process before it can persist session data to disk.
  *
  * See: https://github.com/s4wave/ocpipe/issues/10
- * See: https://github.com/anthropics/anthropic-sdk-typescript/issues/911
+ * See: https://github.com/anthropics/claude-agent-sdk-typescript/issues/177
  *
  * Test flow:
  *   1. Create a session, send a prompt, stream the response, close()
