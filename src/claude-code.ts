@@ -1,7 +1,13 @@
 /**
  * ocpipe Claude Code agent integration.
  *
- * Uses the Claude Agent SDK v2 for running LLM agents with session management.
+ * Uses the Claude Agent SDK v1 query() API for running LLM agents with session management.
+ * The v1 API properly supports session persistence — the subprocess exits naturally when
+ * the query completes, giving it time to save session data to disk. The v2 API's close()
+ * sends SIGTERM immediately, which kills the subprocess before it can persist.
+ *
+ * See: https://github.com/s4wave/ocpipe/issues/10
+ * See: https://github.com/anthropics/anthropic-sdk-typescript/issues/911
  */
 
 import { execSync } from 'child_process'
@@ -9,12 +15,11 @@ import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
 import {
-  unstable_v2_createSession,
-  unstable_v2_resumeSession,
+  query,
   type HookCallback,
+  type Options,
   type PreToolUseHookInput,
   type SDKMessage,
-  type SDKSessionOptions,
 } from '@anthropic-ai/claude-agent-sdk'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
 
@@ -161,22 +166,35 @@ export async function runClaudeCodeAgent(
   const sessionInfo = sessionId ? `[session:${sessionId}]` : '[new session]'
   const promptPreview = prompt.slice(0, 50).replace(/\n/g, ' ')
 
-  // Build session options with configurable permission mode (default: acceptEdits)
+  // Build query options with configurable permission mode (default: acceptEdits)
   const permissionMode = claudeCode?.permissionMode ?? 'acceptEdits'
 
   // Resolve system prompt: explicit option > agent definition file > none
   const systemPrompt = claudeCode?.systemPrompt ?? loadAgentDefinition(agent, workdir)
 
-  const sessionOptions: SDKSessionOptions = {
+  // Bridge external abort signal to an AbortController for the SDK
+  const abortController = new AbortController()
+  if (signal) {
+    signal.addEventListener(
+      'abort',
+      () => {
+        console.error(`\n[abort] Aborting Claude Code query...`)
+        abortController.abort()
+      },
+      { once: true },
+    )
+  }
+
+  const queryOptions: Options = {
     model: modelStr,
     permissionMode,
+    abortController,
+    // v1 persistSession defaults to true, but set explicitly for clarity
+    persistSession: true,
     ...(workdir && { cwd: workdir }),
     ...(systemPrompt && { systemPrompt }),
-    // Enable session persistence so close+resume works.
-    // The v2 SDK defaults persistSession to false, unlike v1 which defaults to true.
-    // Without this, session.close() destroys the session and resumeSession() fails
-    // with "No conversation found with session ID".
-    ...({ persistSession: true }),
+    // Resume from previous session if sessionId provided
+    ...(sessionId && { resume: sessionId }),
     hooks: {
       PreToolUse: [{ hooks: [logToolCall] }],
     },
@@ -196,36 +214,22 @@ export async function runClaudeCodeAgent(
     `\n>>> Claude Code [${modelStr}] [${permissionMode}] ${sessionInfo}: ${promptPreview}...`,
   )
 
-  // Create or resume session
-  const session =
-    sessionId ?
-      unstable_v2_resumeSession(sessionId, sessionOptions)
-    : unstable_v2_createSession(sessionOptions)
+  // v1 query() returns an AsyncGenerator — subprocess exits naturally when done,
+  // allowing session data to be persisted to disk before the process ends.
+  const q = query({ prompt, options: queryOptions })
 
-  // Handle abort signal
-  const abortHandler = () => {
-    console.error(`\n[abort] Closing Claude Code session...`)
-    session.close()
-  }
-  signal?.addEventListener('abort', abortHandler, { once: true })
-
-  // Declare outside try block so finally can access it
   let timeoutId: ReturnType<typeof setTimeout> | null = null
 
   try {
-    // Send the prompt
-    await session.send(prompt)
-
-    // Collect the response
     const textParts: string[] = []
     let newSessionId = sessionId || ''
 
-    // Set up timeout (store ID so we can clear it later)
+    // Set up timeout
     const timeoutPromise =
       timeoutSec > 0 ?
         new Promise<never>((_, reject) => {
           timeoutId = setTimeout(() => {
-            session.close()
+            q.close()
             reject(new Error(`Timeout after ${timeoutSec}s`))
           }, timeoutSec * 1000)
         })
@@ -237,18 +241,15 @@ export async function runClaudeCodeAgent(
         new Promise<never>((_, reject) => {
           signal.addEventListener(
             'abort',
-            () => {
-              reject(new Error('Request aborted'))
-            },
+            () => reject(new Error('Request aborted')),
             { once: true },
           )
         })
       : null
 
-    // Stream the response
+    // Stream the response — iterate the AsyncGenerator
     const streamPromise = (async () => {
-      for await (const msg of session.stream()) {
-        // Capture session ID from any message
+      for await (const msg of q) {
         if (msg.session_id) {
           newSessionId = msg.session_id
         }
@@ -268,7 +269,6 @@ export async function runClaudeCodeAgent(
     if (abortPromise) promises.push(abortPromise)
     await Promise.race(promises)
 
-    // Clear the timeout to prevent it from keeping the event loop alive
     if (timeoutId) clearTimeout(timeoutId)
 
     const response = textParts.join('')
@@ -287,8 +287,8 @@ export async function runClaudeCodeAgent(
       sessionId: newSessionId,
     }
   } finally {
-    signal?.removeEventListener('abort', abortHandler)
     if (timeoutId) clearTimeout(timeoutId)
-    session.close()
+    // v1 subprocess exits naturally when the generator completes — no close() needed.
+    // close() is only called on timeout (above) to force-terminate.
   }
 }
