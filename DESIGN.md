@@ -10,7 +10,7 @@ A Signature declares **what** an LLM interaction does - its inputs, outputs, and
 
 ```typescript
 import { signature, field } from 'ocpipe'
-import { z } from 'zod'
+import { z } from 'zod/v4'
 
 const AnalyzeCode = signature({
   doc: 'Analyze code for potential issues and improvements.',
