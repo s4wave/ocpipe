@@ -150,7 +150,7 @@ export async function runClaudeCodeAgent(
     agent,
     model,
     sessionId,
-    timeoutSec = 600,
+    timeoutSec = 3600,
     workdir,
     claudeCode,
     signal,

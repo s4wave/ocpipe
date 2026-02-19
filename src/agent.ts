@@ -34,7 +34,7 @@ export async function runAgent(
 async function runOpencodeAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
-  const { prompt, agent, model, sessionId, timeoutSec = 600, workdir, signal } = options
+  const { prompt, agent, model, sessionId, timeoutSec = 3600, workdir, signal } = options
 
   if (!model.providerID) {
     throw new Error('providerID is required for OpenCode backend')
