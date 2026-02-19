@@ -206,6 +206,10 @@ export async function runClaudeCodeAgent(
     hooks: {
       PreToolUse: [{ hooks: [logToolCall] }],
     },
+    // Subagent definitions for Task tool dispatch
+    ...(claudeCode?.agents && { agents: claudeCode.agents }),
+    // Tool allow-list (must include 'Task' for subagent dispatch)
+    ...(claudeCode?.allowedTools && { allowedTools: claudeCode.allowedTools }),
     // bypassPermissions requires explicit opt-in
     ...(permissionMode === 'bypassPermissions' &&
       claudeCode?.dangerouslySkipPermissions && {

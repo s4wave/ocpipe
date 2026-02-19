@@ -18,6 +18,18 @@ export type PermissionMode =
   | 'bypassPermissions'
   | 'plan'
 
+/** Subagent definition for Claude Code's Task tool dispatch. */
+export interface AgentDefinition {
+  /** Natural language description of when to use this agent. */
+  description: string
+  /** The agent's system prompt defining its role and behavior. */
+  prompt: string
+  /** Array of allowed tool names. If omitted, inherits all tools from parent. */
+  tools?: string[]
+  /** Model override for this agent ('sonnet' | 'opus' | 'haiku' | 'inherit'). */
+  model?: 'sonnet' | 'opus' | 'haiku' | 'inherit'
+}
+
 /** Claude Code specific session options. */
 export interface ClaudeCodeOptions {
   /** Permission mode (default: 'acceptEdits'). */
@@ -31,6 +43,16 @@ export interface ClaudeCodeOptions {
    * Can be a full string or use the preset format with append.
    */
   systemPrompt?: string | { type: 'preset'; preset: 'claude_code'; append: string }
+  /**
+   * Subagent definitions for parallel task dispatch via the Task tool.
+   * Keys are agent names, values are agent definitions.
+   */
+  agents?: Record<string, AgentDefinition>
+  /**
+   * Tools that are auto-allowed without prompting for permission.
+   * Must include 'Task' for subagent dispatch.
+   */
+  allowedTools?: string[]
 }
 
 /** Model configuration for LLM backends. */
