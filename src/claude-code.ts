@@ -185,10 +185,18 @@ export async function runClaudeCodeAgent(
     )
   }
 
+  // Strip CLAUDECODE env var to allow nested Claude Code sessions.
+  // The parent session sets this to block nesting, but SDK-spawned subagents
+  // are independent processes that should be allowed to run.
+  const cleanEnv = Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => key !== 'CLAUDECODE'),
+  )
+
   const queryOptions: Options = {
     model: modelStr,
     permissionMode,
     abortController,
+    env: cleanEnv,
     // v1 persistSession defaults to true, but set explicitly for clarity
     persistSession: true,
     ...(workdir && { cwd: workdir }),
