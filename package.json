@@ -39,16 +39,16 @@
     }
   },
   "devDependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.2.47",
+    "@anthropic-ai/claude-agent-sdk": "^0.2.62",
     "@eslint/js": "^10.0.1",
-    "bun-types": "^1.3.9",
-    "eslint": "^10.0.0",
+    "bun-types": "^1.3.10",
+    "eslint": "^10.0.2",
     "globals": "^17.3.0",
     "jiti": "^2.6.1",
     "prettier": "^3.8.1",
     "typescript": "^5.0.0",
-    "typescript-eslint": "^8.56.0",
-    "@typescript/native-preview": "^7.0.0-dev.20260218.1",
+    "typescript-eslint": "^8.56.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260227.1",
     "vitest": "^4.0.18"
   },
   "scripts": {
