@@ -249,6 +249,8 @@ async function exportSession(
       sessionId,
       '--format',
       'json',
+      '--turn',
+      '-1',
       '-o',
       tmpPath,
     ])
@@ -271,7 +273,8 @@ async function exportSession(
     }
     await Bun.write(tmpPath, '') // Clean up
 
-    // Extract all assistant text parts
+    // Extract all assistant text parts from the exported turn.
+    // The --turn -1 flag ensures we only get the last turn's messages.
     const messages = data.messages || []
     const textParts: string[] = []
 

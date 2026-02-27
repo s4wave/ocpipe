@@ -222,6 +222,12 @@ export async function runClaudeCodeAgent(
     })(),
   }
 
+  if (claudeCode?.agents) {
+    console.error(`[ocpipe] Subagents defined: ${Object.keys(claudeCode.agents).join(', ')}`)
+  }
+  if (claudeCode?.allowedTools) {
+    console.error(`[ocpipe] Allowed tools: ${claudeCode.allowedTools.join(', ')}`)
+  }
   console.error(
     `\n>>> Claude Code [${modelStr}] [${permissionMode}] ${sessionInfo}: ${promptPreview}...`,
   )
