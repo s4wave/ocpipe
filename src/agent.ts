@@ -34,7 +34,15 @@ export async function runAgent(
 async function runOpencodeAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
-  const { prompt, agent, model, sessionId, timeoutSec = 3600, workdir, signal } = options
+  const {
+    prompt,
+    agent,
+    model,
+    sessionId,
+    timeoutSec = 3600,
+    workdir,
+    signal,
+  } = options
 
   if (!model.providerID) {
     throw new Error('providerID is required for OpenCode backend')
@@ -73,6 +81,17 @@ async function runOpencodeAgent(
 
   if (sessionId) {
     args.push('--session', sessionId)
+  }
+
+  if (model.variant) {
+    args.push('--model-variant', model.variant)
+  }
+
+  if (model.variantThinkingBudget !== undefined) {
+    args.push(
+      '--model-variant-thinking-budget',
+      String(model.variantThinkingBudget),
+    )
   }
 
   return new Promise((resolve, reject) => {

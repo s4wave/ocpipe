@@ -42,7 +42,9 @@ export interface ClaudeCodeOptions {
    * System prompt for the Claude Code session.
    * Can be a full string or use the preset format with append.
    */
-  systemPrompt?: string | { type: 'preset'; preset: 'claude_code'; append: string }
+  systemPrompt?:
+    | string
+    | { type: 'preset'; preset: 'claude_code'; append: string }
   /**
    * Subagent definitions for parallel task dispatch via the Task tool.
    * Keys are agent names, values are agent definitions.
@@ -62,6 +64,10 @@ export interface ModelConfig {
   /** Provider ID (required for OpenCode, ignored for Claude Code). */
   providerID?: string
   modelID: string
+  /** Model variant for reasoning effort (e.g. 'low', 'medium', 'high', 'max'). */
+  variant?: string
+  /** Override the thinking token budget for the selected variant. */
+  variantThinkingBudget?: number
 }
 
 // ============================================================================
