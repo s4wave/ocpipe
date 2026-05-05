@@ -18,8 +18,8 @@
         "vitest": "^4.1.5",
       },
       "peerDependencies": {
-        "@anthropic-ai/claude-agent-sdk": "0.2.126",
-        "zod": "4.4.1",
+        "@anthropic-ai/claude-agent-sdk": "0.2.128",
+        "zod": "4.4.3",
       },
       "optionalPeers": [
         "@anthropic-ai/claude-agent-sdk",
