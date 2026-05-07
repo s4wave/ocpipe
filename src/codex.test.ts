@@ -17,4 +17,17 @@ describe('filterCodexLogText', () => {
 
     expect(filterCodexLogText(text)).toBe(text)
   })
+
+  test('suppresses Cloudflare HTML challenge blocks from Codex startup', () => {
+    const text =
+      'before\n' +
+      '  <head>\n' +
+      '    <meta http-equiv="refresh" content="360">\n' +
+      '  </head>\n' +
+      '  <body>Enable JavaScript and cookies to continue</body>\n' +
+      '</html>\n' +
+      'after\n'
+
+    expect(filterCodexLogText(text)).toBe('before\nafter\n')
+  })
 })

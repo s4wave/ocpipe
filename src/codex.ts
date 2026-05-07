@@ -12,6 +12,7 @@ import type { RunAgentOptions, RunAgentResult } from './types.js'
 
 class CodexLogFilter {
   private buf = ''
+  private suppressHtml = false
 
   write(text: string): string {
     this.buf += text
@@ -23,17 +24,28 @@ class CodexLogFilter {
       }
       const line = this.buf.slice(0, idx + 1)
       this.buf = this.buf.slice(idx + 1)
-      if (suppressCodexLogLine(line)) {
-        continue
-      }
-      out += line
+      out += this.filterLine(line)
     }
   }
 
   flush(): string {
     const line = this.buf
     this.buf = ''
+    return this.filterLine(line)
+  }
+
+  private filterLine(line: string): string {
+    if (this.suppressHtml) {
+      if (line.includes('</html>')) {
+        this.suppressHtml = false
+      }
+      return ''
+    }
     if (suppressCodexLogLine(line)) {
+      return ''
+    }
+    if (suppressCodexHtmlLine(line)) {
+      this.suppressHtml = !line.includes('</html>')
       return ''
     }
     return line
@@ -47,6 +59,10 @@ export function filterCodexLogText(text: string): string {
 
 function suppressCodexLogLine(line: string): boolean {
   return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s+WARN\s+codex_/.test(line)
+}
+
+function suppressCodexHtmlLine(line: string): boolean {
+  return /^\s*(<!doctype html>|<html\b|<head\b)/i.test(line)
 }
 
 /** runCodexAgent executes a Codex agent with a prompt. */

@@ -77,6 +77,7 @@ export class Predict<S extends AnySignature> {
       timeoutSec: ctx.timeoutSec,
       workdir: ctx.workdir,
       claudeCode: ctx.claudeCode,
+      codex: ctx.codex,
       signal: ctx.signal,
     })
 
@@ -207,6 +208,7 @@ export class Predict<S extends AnySignature> {
         timeoutSec: ctx.timeoutSec,
         workdir: ctx.workdir,
         claudeCode: ctx.claudeCode,
+        codex: ctx.codex,
         signal: ctx.signal,
       })
 
@@ -284,6 +286,7 @@ export class Predict<S extends AnySignature> {
         timeoutSec: ctx.timeoutSec,
         workdir: ctx.workdir,
         claudeCode: ctx.claudeCode,
+        codex: ctx.codex,
         signal: ctx.signal,
       })
 

@@ -1,6 +1,6 @@
 {
   "name": "ocpipe",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "description": "SDK for LLM pipelines with OpenCode, Codex, and Zod",
   "type": "module",
   "main": "src/index.ts",
