@@ -30,7 +30,7 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "zod": "4.4.1",
+    "zod": "4.4.3",
     "@anthropic-ai/claude-agent-sdk": "0.2.126"
   },
   "peerDependenciesMeta": {
@@ -39,16 +39,16 @@
     }
   },
   "devDependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.2.126",
+    "@anthropic-ai/claude-agent-sdk": "^0.2.132",
     "@eslint/js": "^10.0.1",
     "bun-types": "^1.3.13",
-    "eslint": "^10.2.1",
-    "globals": "^17.5.0",
-    "jiti": "^2.6.1",
+    "eslint": "^10.3.0",
+    "globals": "^17.6.0",
+    "jiti": "^2.7.0",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.1",
-    "@typescript/native-preview": "^7.0.0-dev.20260430.1",
+    "typescript-eslint": "^8.59.2",
+    "@typescript/native-preview": "^7.0.0-dev.20260506.1",
     "vitest": "^4.1.5"
   },
   "scripts": {
