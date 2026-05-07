@@ -65,6 +65,8 @@ export interface CodexOptions {
   sandbox?: 'read-only' | 'workspace-write' | 'danger-full-access'
   /** Extra config overrides passed as repeated `-c key=value` flags. */
   config?: Record<string, string>
+  /** Reasoning effort passed to Codex (for example: `low`, `medium`, `high`, `xhigh`). */
+  reasoningEffort?: string
   /** Run without persisting Codex session files (default: true). */
   ephemeral?: boolean
   /** Ignore user config for deterministic automation (default: false). */

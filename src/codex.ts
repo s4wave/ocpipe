@@ -10,6 +10,45 @@ import { join } from 'path'
 import { PROJECT_ROOT, TMP_DIR } from './paths.js'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
 
+class CodexLogFilter {
+  private buf = ''
+
+  write(text: string): string {
+    this.buf += text
+    let out = ''
+    for (;;) {
+      const idx = this.buf.indexOf('\n')
+      if (idx < 0) {
+        return out
+      }
+      const line = this.buf.slice(0, idx + 1)
+      this.buf = this.buf.slice(idx + 1)
+      if (suppressCodexLogLine(line)) {
+        continue
+      }
+      out += line
+    }
+  }
+
+  flush(): string {
+    const line = this.buf
+    this.buf = ''
+    if (suppressCodexLogLine(line)) {
+      return ''
+    }
+    return line
+  }
+}
+
+export function filterCodexLogText(text: string): string {
+  const filter = new CodexLogFilter()
+  return filter.write(text) + filter.flush()
+}
+
+function suppressCodexLogLine(line: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s+WARN\s+codex_/.test(line)
+}
+
 /** runCodexAgent executes a Codex agent with a prompt. */
 export async function runCodexAgent(
   options: RunAgentOptions,
@@ -60,6 +99,9 @@ export async function runCodexAgent(
   if (codex?.ignoreRules) {
     args.push('--ignore-rules')
   }
+  if (codex?.reasoningEffort) {
+    args.push('-c', `model_reasoning_effort="${codex.reasoningEffort}"`)
+  }
   for (const dir of codex?.addDirs ?? []) {
     args.push('--add-dir', dir)
   }
@@ -80,6 +122,8 @@ export async function runCodexAgent(
     })
 
     const stderrChunks: string[] = []
+    const stdoutFilter = new CodexLogFilter()
+    const stderrFilter = new CodexLogFilter()
     let aborted = false
 
     const cleanup = async () => {
@@ -100,12 +144,17 @@ export async function runCodexAgent(
     signal?.addEventListener('abort', abortHandler, { once: true })
 
     proc.stdout.on('data', (data: Buffer) => {
-      process.stderr.write(data.toString())
+      const text = stdoutFilter.write(data.toString())
+      if (text) {
+        process.stderr.write(text)
+      }
     })
     proc.stderr.on('data', (data: Buffer) => {
-      const text = data.toString()
+      const text = stderrFilter.write(data.toString())
       stderrChunks.push(text)
-      process.stderr.write(text)
+      if (text) {
+        process.stderr.write(text)
+      }
     })
 
     const timeout =
@@ -124,10 +173,20 @@ export async function runCodexAgent(
       signal?.removeEventListener('abort', abortHandler)
       if (aborted) return
 
+      const stdoutTail = stdoutFilter.flush()
+      if (stdoutTail) {
+        process.stderr.write(stdoutTail)
+      }
+      const stderrTail = stderrFilter.flush()
+      if (stderrTail) {
+        stderrChunks.push(stderrTail)
+        process.stderr.write(stderrTail)
+      }
       const stderr = stderrChunks.join('').trim()
       if (code !== 0) {
         await cleanup()
-        const detail = stderr ? `\n${stderr.split('\n').slice(-10).join('\n')}` : ''
+        const detail =
+          stderr ? `\n${stderr.split('\n').slice(-10).join('\n')}` : ''
         reject(new Error(`Codex exited with code ${code}${detail}`))
         return
       }
