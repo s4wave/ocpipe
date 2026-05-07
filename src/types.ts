@@ -9,7 +9,7 @@ import type { z } from 'zod/v4'
 // ============================================================================
 
 /** Backend type for running agents. */
-export type BackendType = 'opencode' | 'claude-code'
+export type BackendType = 'opencode' | 'claude-code' | 'codex'
 
 /** Permission mode for Claude Code sessions. */
 export type PermissionMode =
@@ -57,6 +57,24 @@ export interface ClaudeCodeOptions {
   allowedTools?: string[]
 }
 
+/** Codex CLI specific session options. */
+export interface CodexOptions {
+  /** Path to Codex executable (default: `codex` from PATH). */
+  pathToCodexExecutable?: string
+  /** Sandbox mode for `codex exec` (default: `read-only`). */
+  sandbox?: 'read-only' | 'workspace-write' | 'danger-full-access'
+  /** Extra config overrides passed as repeated `-c key=value` flags. */
+  config?: Record<string, string>
+  /** Run without persisting Codex session files (default: true). */
+  ephemeral?: boolean
+  /** Ignore user config for deterministic automation (default: false). */
+  ignoreUserConfig?: boolean
+  /** Ignore user and project execpolicy rules (default: false). */
+  ignoreRules?: boolean
+  /** Additional directories Codex may access alongside the working directory. */
+  addDirs?: string[]
+}
+
 /** Model configuration for LLM backends. */
 export interface ModelConfig {
   /** Backend to use (default: 'opencode'). */
@@ -88,6 +106,8 @@ export interface ExecutionContext {
   workdir?: string
   /** Claude Code specific options. */
   claudeCode?: ClaudeCodeOptions
+  /** Codex CLI specific options. */
+  codex?: CodexOptions
   /** AbortSignal for cancelling requests. When aborted, kills subprocesses. */
   signal?: AbortSignal
 }
@@ -306,6 +326,8 @@ export interface PipelineConfig {
   workdir?: string
   /** Claude Code specific options. */
   claudeCode?: ClaudeCodeOptions
+  /** Codex CLI specific options. */
+  codex?: CodexOptions
 }
 
 /** Options for running a pipeline step. */
@@ -340,6 +362,8 @@ export interface RunAgentOptions {
   workdir?: string
   /** Claude Code specific options. */
   claudeCode?: ClaudeCodeOptions
+  /** Codex CLI specific options. */
+  codex?: CodexOptions
   /** AbortSignal for cancelling the request. When aborted, kills the subprocess. */
   signal?: AbortSignal
 }

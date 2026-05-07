@@ -49,7 +49,7 @@ type GreetOut = InferOutputs<typeof Greet> // { greeting: string }
 
 ### Backends
 
-ocpipe supports two backends for running LLM agents:
+ocpipe supports three backends for running LLM agents:
 
 **OpenCode** (default) - Requires `opencode` CLI in your PATH. Supports 75+ providers.
 
@@ -76,6 +76,13 @@ defaultModel: { backend: 'claude-code', modelID: 'sonnet' },
 claudeCode: { permissionMode: 'acceptEdits' },
 ```
 
+**Codex** - Uses `@openai/codex`. Install as a peer dependency.
+
+```typescript
+defaultModel: { backend: 'codex', modelID: 'gpt-5.4' },
+codex: { sandbox: 'read-only', ephemeral: true },
+```
+
 ### Requirements
 
 **For OpenCode backend:** Currently requires [this OpenCode fork](https://github.com/paralin/opencode). Once the following PRs are merged, the official release will work:
@@ -87,6 +94,12 @@ claudeCode: { permissionMode: 'acceptEdits' },
 
 ```bash
 bun add @anthropic-ai/claude-agent-sdk
+```
+
+**For Codex backend:** Install the Codex CLI package as a peer dependency:
+
+```bash
+bun add @openai/codex
 ```
 
 ### Documentation

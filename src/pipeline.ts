@@ -34,6 +34,7 @@ export class Pipeline<S extends BaseState> {
       timeoutSec: config.timeoutSec ?? 3600,
       workdir: config.workdir,
       claudeCode: config.claudeCode,
+      codex: config.codex,
     }
   }
 

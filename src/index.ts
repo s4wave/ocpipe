@@ -91,6 +91,7 @@ export type {
   BackendType,
   PermissionMode,
   ClaudeCodeOptions,
+  CodexOptions,
   ModelConfig,
   ExecutionContext,
   StepResult,

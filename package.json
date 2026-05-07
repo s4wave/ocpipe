@@ -1,7 +1,7 @@
 {
   "name": "ocpipe",
-  "version": "0.6.3",
-  "description": "SDK for LLM pipelines with OpenCode and Zod",
+  "version": "0.6.4",
+  "description": "SDK for LLM pipelines with OpenCode, Codex, and Zod",
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -19,6 +19,7 @@
     "dspy",
     "llm",
     "opencode",
+    "codex",
     "typescript",
     "ai",
     "workflow",
@@ -28,18 +29,22 @@
   "engines": {
     "bun": ">=1.0.0"
   },
-  "dependencies": {},
   "peerDependencies": {
     "zod": "4.4.3",
-    "@anthropic-ai/claude-agent-sdk": "0.2.126"
+    "@anthropic-ai/claude-agent-sdk": "0.2.126",
+    "@openai/codex": "0.128.0"
   },
   "peerDependenciesMeta": {
     "@anthropic-ai/claude-agent-sdk": {
+      "optional": true
+    },
+    "@openai/codex": {
       "optional": true
     }
   },
   "devDependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.132",
+    "@openai/codex": "^0.128.0",
     "@eslint/js": "^10.0.1",
     "bun-types": "^1.3.13",
     "eslint": "^10.3.0",

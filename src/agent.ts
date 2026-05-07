@@ -1,7 +1,8 @@
 /**
  * ocpipe agent integration.
  *
- * Dispatches to OpenCode CLI or Claude Code SDK based on backend configuration.
+ * Dispatches to OpenCode CLI, Claude Code SDK, or Codex CLI based on backend
+ * configuration.
  */
 
 import { spawn } from 'child_process'
@@ -25,6 +26,11 @@ export async function runAgent(
     // Dynamic import to avoid requiring @anthropic-ai/claude-agent-sdk when using opencode
     const { runClaudeCodeAgent } = await import('./claude-code.js')
     return runClaudeCodeAgent(options)
+  }
+
+  if (backend === 'codex') {
+    const { runCodexAgent } = await import('./codex.js')
+    return runCodexAgent(options)
   }
 
   return runOpencodeAgent(options)
