@@ -1,14 +1,16 @@
 /**
- * ocpipe Codex CLI integration.
+ * ocpipe Codex SDK integration.
  *
- * Runs Codex non-interactively through `codex exec`.
+ * Runs Codex through @openai/codex-sdk threads.
  */
 
-import { spawn } from 'child_process'
-import { mkdir, readFile, unlink } from 'fs/promises'
-import { join } from 'path'
-import { PROJECT_ROOT, TMP_DIR } from './paths.js'
-import type { RunAgentOptions, RunAgentResult } from './types.js'
+import {
+  Codex,
+  type CodexOptions as CodexSdkClientOptions,
+  type ThreadOptions,
+} from '@openai/codex-sdk'
+import { PROJECT_ROOT } from './paths.js'
+import type { CodexOptions, RunAgentOptions, RunAgentResult } from './types.js'
 
 class CodexLogFilter {
   private buf = ''
@@ -79,157 +81,103 @@ export async function runCodexAgent(
     signal,
   } = options
 
-  if (sessionId) {
-    throw new Error('Codex backend does not support session resume yet')
-  }
   if (signal?.aborted) {
     throw new Error('Request aborted')
   }
 
   const cwd = workdir ?? PROJECT_ROOT
-  await mkdir(TMP_DIR, { recursive: true })
-  const stamp = `${Date.now()}_${Math.random().toString(36).slice(2)}`
-  const outputFile = join(TMP_DIR, `codex_output_${stamp}.txt`)
-
-  const cmd = codex?.pathToCodexExecutable ?? 'codex'
-  const args = [
-    'exec',
-    '--color',
-    'never',
-    '--model',
-    model.modelID,
-    '--sandbox',
-    codex?.sandbox ?? 'read-only',
-    '--cd',
-    cwd,
-    '--output-last-message',
-    outputFile,
-  ]
-
-  if (codex?.ephemeral ?? true) {
-    args.push('--ephemeral')
-  }
-  if (codex?.ignoreUserConfig) {
-    args.push('--ignore-user-config')
-  }
-  if (codex?.ignoreRules) {
-    args.push('--ignore-rules')
-  }
-  if (codex?.reasoningEffort) {
-    args.push('-c', `model_reasoning_effort="${codex.reasoningEffort}"`)
-  }
-  for (const dir of codex?.addDirs ?? []) {
-    args.push('--add-dir', dir)
-  }
-  for (const [key, value] of Object.entries(codex?.config ?? {})) {
-    args.push('-c', `${key}=${value}`)
-  }
-  args.push('-')
+  const client = new Codex(buildCodexClientOptions(codex))
+  const threadOptions = buildCodexThreadOptions(model.modelID, cwd, codex)
+  const thread =
+    sessionId && !codex?.ephemeral ?
+      client.resumeThread(sessionId, threadOptions)
+    : client.startThread(threadOptions)
 
   const promptPreview = prompt.slice(0, 50).replace(/\n/g, ' ')
+  const sessionInfo =
+    sessionId && !codex?.ephemeral ? `[thread:${sessionId}]` : '[new thread]'
   console.error(
-    `\n>>> Codex [${model.modelID}] [new session]: ${promptPreview}...`,
+    `\n>>> Codex SDK [${model.modelID}] ${sessionInfo}: ${promptPreview}...`,
   )
 
-  return new Promise((resolve, reject) => {
-    const proc = spawn(cmd, args, {
-      cwd,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    })
-
-    const stderrChunks: string[] = []
-    const stdoutFilter = new CodexLogFilter()
-    const stderrFilter = new CodexLogFilter()
-    let aborted = false
-
-    const cleanup = async () => {
-      await unlink(outputFile).catch(() => {})
-    }
-
-    const abortHandler = () => {
-      if (aborted) return
-      aborted = true
-      console.error('\n[abort] Killing Codex subprocess...')
-      proc.kill('SIGTERM')
+  const abort = new AbortController()
+  let timedOut = false
+  const abortHandler = () => abort.abort()
+  signal?.addEventListener('abort', abortHandler, { once: true })
+  const timeout =
+    timeoutSec > 0 ?
       setTimeout(() => {
-        if (!proc.killed) proc.kill('SIGKILL')
-      }, 1000)
-      void cleanup()
-      reject(new Error('Request aborted'))
+        timedOut = true
+        abort.abort()
+      }, timeoutSec * 1000)
+    : null
+
+  try {
+    const result = await thread.run(prompt, { signal: abort.signal })
+    const response = result.finalResponse.trim()
+    if (!response) {
+      throw new Error('Codex returned an empty response')
     }
-    signal?.addEventListener('abort', abortHandler, { once: true })
 
-    proc.stdout.on('data', (data: Buffer) => {
-      const text = stdoutFilter.write(data.toString())
-      if (text) {
-        process.stderr.write(text)
-      }
-    })
-    proc.stderr.on('data', (data: Buffer) => {
-      const text = stderrFilter.write(data.toString())
-      stderrChunks.push(text)
-      if (text) {
-        process.stderr.write(text)
-      }
-    })
+    const nextSessionId = codex?.ephemeral ? '' : (thread.id ?? '')
+    const sessionStr = nextSessionId || 'none'
+    console.error(
+      `<<< Codex SDK done (${response.length} chars) [thread:${sessionStr}]`,
+    )
 
-    const timeout =
-      timeoutSec > 0 ?
-        setTimeout(() => {
-          proc.kill()
-          void cleanup()
-          reject(new Error(`Timeout after ${timeoutSec}s`))
-        }, timeoutSec * 1000)
-      : null
+    return {
+      text: response,
+      sessionId: nextSessionId,
+    }
+  } catch (err) {
+    if (timedOut) {
+      throw new Error(`Timeout after ${timeoutSec}s`, { cause: err })
+    }
+    if (signal?.aborted) {
+      throw new Error('Request aborted', { cause: err })
+    }
+    throw err
+  } finally {
+    if (timeout) clearTimeout(timeout)
+    signal?.removeEventListener('abort', abortHandler)
+  }
+}
 
-    proc.stdin.end(prompt)
+function buildCodexClientOptions(
+  codex: CodexOptions | undefined,
+): CodexSdkClientOptions {
+  return {
+    ...(codex?.pathToCodexExecutable ?
+      { codexPathOverride: codex.pathToCodexExecutable }
+    : {}),
+    ...(codex?.baseUrl ? { baseUrl: codex.baseUrl } : {}),
+    ...(codex?.apiKey ? { apiKey: codex.apiKey } : {}),
+    ...(codex?.env ? { env: codex.env } : {}),
+    ...(codex?.config ? { config: codex.config } : {}),
+  }
+}
 
-    proc.on('close', async (code) => {
-      if (timeout) clearTimeout(timeout)
-      signal?.removeEventListener('abort', abortHandler)
-      if (aborted) return
-
-      const stdoutTail = stdoutFilter.flush()
-      if (stdoutTail) {
-        process.stderr.write(stdoutTail)
-      }
-      const stderrTail = stderrFilter.flush()
-      if (stderrTail) {
-        stderrChunks.push(stderrTail)
-        process.stderr.write(stderrTail)
-      }
-      const stderr = stderrChunks.join('').trim()
-      if (code !== 0) {
-        await cleanup()
-        const detail =
-          stderr ? `\n${stderr.split('\n').slice(-10).join('\n')}` : ''
-        reject(new Error(`Codex exited with code ${code}${detail}`))
-        return
-      }
-
-      try {
-        const response = (await readFile(outputFile, 'utf8')).trim()
-        await cleanup()
-        if (!response) {
-          reject(new Error('Codex returned an empty response'))
-          return
-        }
-        console.error(`<<< Codex done (${response.length} chars)`)
-        resolve({
-          text: response,
-          sessionId: '',
-        })
-      } catch (err) {
-        await cleanup()
-        reject(err)
-      }
-    })
-
-    proc.on('error', async (err) => {
-      if (timeout) clearTimeout(timeout)
-      signal?.removeEventListener('abort', abortHandler)
-      await cleanup()
-      reject(err)
-    })
-  })
+function buildCodexThreadOptions(
+  modelID: string,
+  cwd: string,
+  codex: CodexOptions | undefined,
+): ThreadOptions {
+  return {
+    model: modelID,
+    workingDirectory: cwd,
+    skipGitRepoCheck: true,
+    sandboxMode: codex?.sandbox ?? 'read-only',
+    ...(codex?.reasoningEffort ?
+      { modelReasoningEffort: codex.reasoningEffort }
+    : {}),
+    ...(codex?.addDirs ? { additionalDirectories: codex.addDirs } : {}),
+    ...(codex?.approvalPolicy ? { approvalPolicy: codex.approvalPolicy } : {}),
+    ...(codex?.networkAccessEnabled !== undefined ?
+      { networkAccessEnabled: codex.networkAccessEnabled }
+    : {}),
+    ...(codex?.webSearchMode ? { webSearchMode: codex.webSearchMode } : {}),
+    ...(codex?.webSearchEnabled !== undefined ?
+      { webSearchEnabled: codex.webSearchEnabled }
+    : {}),
+  }
 }

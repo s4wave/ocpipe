@@ -76,11 +76,11 @@ defaultModel: { backend: 'claude-code', modelID: 'sonnet' },
 claudeCode: { permissionMode: 'acceptEdits' },
 ```
 
-**Codex** - Uses `@openai/codex`. Install as a peer dependency.
+**Codex** - Uses `@openai/codex-sdk`. Install as a peer dependency.
 
 ```typescript
 defaultModel: { backend: 'codex', modelID: 'gpt-5.4' },
-codex: { sandbox: 'read-only', ephemeral: true },
+codex: { sandbox: 'read-only', reasoningEffort: 'high' },
 ```
 
 ### Requirements
@@ -96,10 +96,10 @@ codex: { sandbox: 'read-only', ephemeral: true },
 bun add @anthropic-ai/claude-agent-sdk
 ```
 
-**For Codex backend:** Install the Codex CLI package as a peer dependency:
+**For Codex backend:** Install the Codex SDK package as a peer dependency:
 
 ```bash
-bun add @openai/codex
+bun add @openai/codex-sdk
 ```
 
 ### Documentation

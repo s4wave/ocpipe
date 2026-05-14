@@ -1,7 +1,7 @@
 /**
  * ocpipe agent integration.
  *
- * Dispatches to OpenCode CLI, Claude Code SDK, or Codex CLI based on backend
+ * Dispatches to OpenCode CLI, Claude Code SDK, or Codex SDK based on backend
  * configuration.
  */
 
