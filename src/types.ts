@@ -418,4 +418,38 @@ export interface RunAgentResult {
   text: string
   /** Session ID (for continuing the conversation). */
   sessionId: string
+  /** Clean run summary, set for the Codex backend. */
+  runSummary?: CodexRunSummary
+}
+
+/** CodexRunCommand records one command the Codex agent executed. */
+export interface CodexRunCommand {
+  command: string
+  status: string
+  exitCode: number | null
+}
+
+/** CodexRunFileChange records one file the Codex agent changed. */
+export interface CodexRunFileChange {
+  path: string
+  kind: 'add' | 'update' | 'delete'
+  status: string
+}
+
+/** CodexRunTokens records token usage for a Codex turn. */
+export interface CodexRunTokens {
+  input: number
+  cached: number
+  output: number
+  reasoning: number
+}
+
+/** CodexRunSummary is the parent-readable projection of a Codex turn. */
+export interface CodexRunSummary {
+  status: 'completed' | 'failed' | 'unknown'
+  finalMessage: string
+  errorMessage: string
+  commands: CodexRunCommand[]
+  fileChanges: CodexRunFileChange[]
+  tokens: CodexRunTokens | null
 }

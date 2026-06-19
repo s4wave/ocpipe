@@ -50,6 +50,7 @@ export { createSessionId, createBaseState, extendBaseState } from './state.js'
 
 // Agent integration
 export { runAgent, logStep } from './agent.js'
+export { buildCodexRunSummary, formatCodexRunSummary } from './codex.js'
 
 // Response parsing
 export {
@@ -116,6 +117,10 @@ export type {
   // Agent types
   RunAgentOptions,
   RunAgentResult,
+  CodexRunSummary,
+  CodexRunCommand,
+  CodexRunFileChange,
+  CodexRunTokens,
   // Correction types
   CorrectionMethod,
   CorrectionConfig,
