@@ -92,6 +92,7 @@ export type {
   BackendType,
   PermissionMode,
   ClaudeCodeOptions,
+  PiOptions,
   CodexApprovalPolicy,
   CodexConfigValue,
   CodexOptions,

@@ -78,6 +78,7 @@ export class Predict<S extends AnySignature> {
       workdir: ctx.workdir,
       claudeCode: ctx.claudeCode,
       codex: ctx.codex,
+      pi: ctx.pi,
       signal: ctx.signal,
     })
 
@@ -209,6 +210,7 @@ export class Predict<S extends AnySignature> {
         workdir: ctx.workdir,
         claudeCode: ctx.claudeCode,
         codex: ctx.codex,
+        pi: ctx.pi,
         signal: ctx.signal,
       })
 
@@ -287,6 +289,7 @@ export class Predict<S extends AnySignature> {
         workdir: ctx.workdir,
         claudeCode: ctx.claudeCode,
         codex: ctx.codex,
+        pi: ctx.pi,
         signal: ctx.signal,
       })
 

@@ -9,7 +9,7 @@ import type { z } from 'zod/v4'
 // ============================================================================
 
 /** Backend type for running agents. */
-export type BackendType = 'opencode' | 'claude-code' | 'codex'
+export type BackendType = 'opencode' | 'claude-code' | 'codex' | 'pi'
 
 /** Reasoning effort for Codex SDK threads. */
 export type CodexReasoningEffort =
@@ -119,6 +119,20 @@ export interface CodexOptions {
   webSearchEnabled?: boolean
 }
 
+/** Pi coding agent specific session options. */
+export interface PiOptions {
+  /** Path to the Pi executable (default: `pi` from PATH). */
+  command?: string
+  /** Pi runtime home passed as PI_CODING_AGENT_DIR. */
+  providerHome?: string
+  /** Pi session directory passed by flag and PI_CODING_AGENT_SESSION_DIR. */
+  sessionDir?: string
+  /** Base URL passed as LLAMA_BASE_URL. */
+  baseUrl?: string
+  /** Extra environment variables passed to the Pi subprocess. */
+  env?: Record<string, string>
+}
+
 /** Model configuration for LLM backends. */
 export interface ModelConfig {
   /** Backend to use (default: 'opencode'). */
@@ -152,6 +166,8 @@ export interface ExecutionContext {
   claudeCode?: ClaudeCodeOptions
   /** Codex SDK specific options. */
   codex?: CodexOptions
+  /** Pi coding agent specific options. */
+  pi?: PiOptions
   /** AbortSignal for cancelling in-flight backend requests. */
   signal?: AbortSignal
 }
@@ -372,6 +388,8 @@ export interface PipelineConfig {
   claudeCode?: ClaudeCodeOptions
   /** Codex SDK specific options. */
   codex?: CodexOptions
+  /** Pi coding agent specific options. */
+  pi?: PiOptions
 }
 
 /** Options for running a pipeline step. */
@@ -408,6 +426,8 @@ export interface RunAgentOptions {
   claudeCode?: ClaudeCodeOptions
   /** Codex SDK specific options. */
   codex?: CodexOptions
+  /** Pi coding agent specific options. */
+  pi?: PiOptions
   /** AbortSignal for cancelling the request. */
   signal?: AbortSignal
 }

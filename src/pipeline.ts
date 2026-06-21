@@ -35,6 +35,7 @@ export class Pipeline<S extends BaseState> {
       workdir: config.workdir,
       claudeCode: config.claudeCode,
       codex: config.codex,
+      pi: config.pi,
     }
   }
 

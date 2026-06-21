@@ -1,7 +1,7 @@
 /**
  * ocpipe agent integration.
  *
- * Dispatches to OpenCode CLI, Claude Code SDK, or Codex SDK based on backend
+ * Dispatches to OpenCode CLI, Claude Code SDK, Codex SDK, or Pi based on backend
  * configuration.
  */
 
@@ -31,6 +31,11 @@ export async function runAgent(
   if (backend === 'codex') {
     const { runCodexAgent } = await import('./codex.js')
     return runCodexAgent(options)
+  }
+
+  if (backend === 'pi') {
+    const { runPiAgent } = await import('./pi.js')
+    return runPiAgent(options)
   }
 
   return runOpencodeAgent(options)
