@@ -93,6 +93,7 @@ export type {
   PermissionMode,
   ClaudeCodeOptions,
   PiOptions,
+  OmpOptions,
   CodexApprovalPolicy,
   CodexConfigValue,
   CodexOptions,

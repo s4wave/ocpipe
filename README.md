@@ -1,5 +1,5 @@
 <p align="center"><strong>ocpipe</strong></p>
-<p align="center">Build LLM pipelines with <a href="https://github.com/sst/opencode">OpenCode</a>, <a href="https://github.com/anthropics/claude-code">Claude Code</a>, Pi, and <a href="https://zod.dev">Zod</a>.</p>
+<p align="center">Build LLM pipelines with <a href="https://github.com/sst/opencode">OpenCode</a>, <a href="https://github.com/anthropics/claude-code">Claude Code</a>, Oh My Pi, Pi, and <a href="https://zod.dev">Zod</a>.</p>
 <p align="center">Inspired by <a href="https://github.com/stanfordnlp/dspy">DSPy</a>.</p>
 <p align="center">
   <a href="https://www.npmjs.com/package/ocpipe"><img alt="npm" src="https://img.shields.io/npm/v/ocpipe?style=flat-square" /></a>
@@ -11,7 +11,7 @@
 - **Type-safe** Define inputs and outputs with Zod schemas
 - **Modular** Compose modules into complex pipelines
 - **Checkpoints** Resume from any step
-- **Multi-backend** Choose between OpenCode (75+ providers), Claude Code SDK, Codex SDK, or Pi
+- **Multi-backend** Choose between OpenCode (75+ providers), Claude Code SDK, Codex SDK, Oh My Pi, or Pi
 - **Auto-correction** Fixes schema mismatches automatically
 
 ### Quick Start
@@ -49,7 +49,7 @@ type GreetOut = InferOutputs<typeof Greet> // { greeting: string }
 
 ### Backends
 
-ocpipe supports four backends for running LLM agents:
+ocpipe supports five backends for running LLM agents:
 
 **OpenCode** (default) - Requires `opencode` CLI in your PATH. Supports 75+ providers.
 
@@ -81,6 +81,13 @@ claudeCode: { permissionMode: 'acceptEdits' },
 ```typescript
 defaultModel: { backend: 'codex', modelID: 'gpt-5.4' },
 codex: { sandbox: 'read-only', reasoningEffort: 'high' },
+```
+
+**Oh My Pi** - Uses the `omp` CLI in headless JSON print mode.
+
+```typescript
+defaultModel: { backend: 'omp', modelID: 'gpt-5.5' },
+omp: { command: 'omp', approvalMode: 'yolo', thinking: 'high' },
 ```
 
 **Pi** - Uses the `pi` coding-agent CLI JSONL RPC mode.

@@ -9,6 +9,8 @@ import { spawn } from 'child_process'
 import { mkdir, writeFile, unlink } from 'fs/promises'
 import { join } from 'path'
 import { PROJECT_ROOT, TMP_DIR } from './paths.js'
+import { runOmpAgent } from './omp.js'
+import { runPiAgent } from './pi.js'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
 
 /** Get command and args to invoke opencode from PATH */
@@ -23,19 +25,23 @@ export async function runAgent(
   const backend = options.model.backend ?? 'opencode'
 
   if (backend === 'claude-code') {
-    // Dynamic import to avoid requiring @anthropic-ai/claude-agent-sdk when using opencode
+    // Dynamic import is required: @anthropic-ai/claude-agent-sdk is an optional peer absent for other backends.
     const { runClaudeCodeAgent } = await import('./claude-code.js')
     return runClaudeCodeAgent(options)
   }
 
   if (backend === 'codex') {
+    // Dynamic import is required: @openai/codex-sdk is an optional peer absent for other backends.
     const { runCodexAgent } = await import('./codex.js')
     return runCodexAgent(options)
   }
 
   if (backend === 'pi') {
-    const { runPiAgent } = await import('./pi.js')
     return runPiAgent(options)
+  }
+
+  if (backend === 'omp') {
+    return runOmpAgent(options)
   }
 
   return runOpencodeAgent(options)

@@ -9,7 +9,7 @@ import type { z } from 'zod/v4'
 // ============================================================================
 
 /** Backend type for running agents. */
-export type BackendType = 'opencode' | 'claude-code' | 'codex' | 'pi'
+export type BackendType = 'opencode' | 'claude-code' | 'codex' | 'pi' | 'omp'
 
 /** Reasoning effort for Codex SDK threads. */
 export type CodexReasoningEffort =
@@ -133,6 +133,38 @@ export interface PiOptions {
   env?: Record<string, string>
 }
 
+/** Oh My Pi CLI specific session options. */
+export interface OmpOptions {
+  /** Path to the Oh My Pi executable (default: `omp` from PATH). */
+  command?: string
+  /** Process cwd used to launch Oh My Pi; defaults to the target workdir. */
+  processCwd?: string
+  /** OMP_HOME passed to the Oh My Pi subprocess. */
+  home?: string
+  /** CODEX_HOME value passed via `--codex-home`; set to empty string to clear it. */
+  codexHome?: string
+  /** Extra environment variables passed to the Oh My Pi subprocess. */
+  env?: Record<string, string>
+  /** Add `--auto-approve` (default: true). */
+  autoApprove?: boolean
+  /** Approval mode passed with `--approval-mode` (default: `yolo`). */
+  approvalMode?: string
+  /** Thinking effort passed with `--thinking` (default: `high`). */
+  thinking?: string
+  /** Run Oh My Pi as a continuing headless goal. */
+  goalMode?: boolean
+  /** Goal objective; setting this also enables goal mode. */
+  goalObjective?: string
+  /** Stop when context reaches this percent of the model window. */
+  contextStopPercent?: number
+  /** Stop when context reaches this token count. */
+  contextStopTokens?: number
+  /** Scratch handoff path passed to Oh My Pi; relative paths resolve against workdir. */
+  scratchHandoffFile?: string
+  /** Extra raw Oh My Pi arguments appended before the prompt separator. */
+  extraArgs?: string[]
+}
+
 /** Model configuration for LLM backends. */
 export interface ModelConfig {
   /** Backend to use (default: 'opencode'). */
@@ -168,6 +200,8 @@ export interface ExecutionContext {
   codex?: CodexOptions
   /** Pi coding agent specific options. */
   pi?: PiOptions
+  /** Oh My Pi specific options. */
+  omp?: OmpOptions
   /** AbortSignal for cancelling in-flight backend requests. */
   signal?: AbortSignal
 }
@@ -390,6 +424,8 @@ export interface PipelineConfig {
   codex?: CodexOptions
   /** Pi coding agent specific options. */
   pi?: PiOptions
+  /** Oh My Pi specific options. */
+  omp?: OmpOptions
 }
 
 /** Options for running a pipeline step. */
@@ -428,6 +464,8 @@ export interface RunAgentOptions {
   codex?: CodexOptions
   /** Pi coding agent specific options. */
   pi?: PiOptions
+  /** Oh My Pi specific options. */
+  omp?: OmpOptions
   /** AbortSignal for cancelling the request. */
   signal?: AbortSignal
 }

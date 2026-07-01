@@ -79,6 +79,7 @@ export class Predict<S extends AnySignature> {
       claudeCode: ctx.claudeCode,
       codex: ctx.codex,
       pi: ctx.pi,
+      omp: ctx.omp,
       signal: ctx.signal,
     })
 
@@ -211,6 +212,7 @@ export class Predict<S extends AnySignature> {
         claudeCode: ctx.claudeCode,
         codex: ctx.codex,
         pi: ctx.pi,
+        omp: ctx.omp,
         signal: ctx.signal,
       })
 
@@ -290,6 +292,7 @@ export class Predict<S extends AnySignature> {
         claudeCode: ctx.claudeCode,
         codex: ctx.codex,
         pi: ctx.pi,
+        omp: ctx.omp,
         signal: ctx.signal,
       })
 
