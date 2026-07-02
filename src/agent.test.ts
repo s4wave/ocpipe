@@ -1,11 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import type { Mock } from 'vitest'
+import { EventEmitter } from 'events'
 import { mkdtemp, rm, stat } from 'fs/promises'
 import { tmpdir } from 'os'
-import { join } from 'path'
-import type { RunAgentOptions, RunAgentResult } from './types.js'
+import { join, sep } from 'path'
+import type { RunAgentResult } from './types.js'
+
+const childProcess = vi.hoisted(() => ({
+  spawn: vi.fn(),
+}))
 
 const ompBackend = vi.hoisted(() => ({
   runOmpAgent: vi.fn(),
+}))
+
+vi.mock('child_process', () => ({
+  spawn: childProcess.spawn,
 }))
 
 vi.mock('./omp.js', () => ({
@@ -13,6 +23,24 @@ vi.mock('./omp.js', () => ({
 }))
 
 import { runAgent } from './agent.js'
+
+interface FakeProcess extends EventEmitter {
+  stdout: EventEmitter
+  stderr: EventEmitter
+  kill: Mock
+}
+
+function successfulOpenCodeProcess() {
+  const proc = new EventEmitter() as FakeProcess
+  proc.stdout = new EventEmitter()
+  proc.stderr = new EventEmitter()
+  proc.kill = vi.fn()
+  queueMicrotask(() => {
+    proc.stdout.emit('data', Buffer.from('OpenCode response'))
+    proc.emit('close', 0)
+  })
+  return proc
+}
 
 async function pathExists(path: string) {
   try {
@@ -25,6 +53,8 @@ async function pathExists(path: string) {
 
 describe('runAgent backend selection', () => {
   beforeEach(() => {
+    childProcess.spawn.mockReset()
+    childProcess.spawn.mockImplementation(successfulOpenCodeProcess)
     ompBackend.runOmpAgent.mockReset()
     ompBackend.runOmpAgent.mockResolvedValue({
       text: 'OMP response',
@@ -44,12 +74,13 @@ describe('runAgent backend selection', () => {
           model: { providerID: 'legacy-provider', modelID: 'legacy-model' },
           workdir,
           timeoutSec: 0,
-        } as RunAgentOptions)
+        })
       } catch (error) {
         thrown = error
       }
 
       expect(ompBackend.runOmpAgent).toHaveBeenCalledOnce()
+      expect(childProcess.spawn).not.toHaveBeenCalled()
       expect(await pathExists(join(workdir, '.opencode', 'prompts'))).toBe(
         false,
       )
@@ -64,22 +95,30 @@ describe('runAgent backend selection', () => {
     }
   })
 
-  test('OpenCode is no longer a supported backend', async () => {
+  test('OpenCode backend does not require or pass named agents', async () => {
     const workdir = await mkdtemp(join(tmpdir(), 'ocpipe-run-agent-opencode-'))
     try {
-      await expect(
-        runAgent({
-          prompt: 'do not spawn OpenCode',
-          model: {
-            backend: 'opencode',
-            providerID: 'legacy-provider',
-            modelID: 'legacy-model',
-          },
-          workdir,
-          timeoutSec: 0,
-        } as unknown as RunAgentOptions),
-      ).rejects.toThrow('Unsupported backend: opencode')
-      expect(ompBackend.runOmpAgent).not.toHaveBeenCalled()
+      const result = await runAgent({
+        prompt: 'send prompt directly without a named agent',
+        model: {
+          backend: 'opencode',
+          providerID: 'legacy-provider',
+          modelID: 'legacy-model',
+        },
+        workdir,
+        timeoutSec: 0,
+      })
+
+      expect(result).toEqual({ text: 'OpenCode response', sessionId: '' })
+      expect(childProcess.spawn).toHaveBeenCalledOnce()
+      const spawnArgs = childProcess.spawn.mock.calls[0]?.[1] as string[]
+      expect(spawnArgs).not.toContain('--agent')
+      const promptFileFlag = spawnArgs.indexOf('--prompt-file')
+      expect(promptFileFlag).toBeGreaterThanOrEqual(0)
+      const promptFile = spawnArgs[promptFileFlag + 1]
+      expect(promptFile).toBeTruthy()
+      expect(promptFile).not.toContain(`${sep}.opencode${sep}`)
+      expect(promptFile?.startsWith(join(workdir, '.opencode'))).toBe(false)
       expect(await pathExists(join(workdir, '.opencode'))).toBe(false)
     } finally {
       await rm(workdir, { recursive: true, force: true })

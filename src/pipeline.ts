@@ -32,6 +32,7 @@ export class Pipeline<S extends BaseState> {
       defaultModel: config.defaultModel,
       timeoutSec: config.timeoutSec ?? 3600,
       workdir: config.workdir,
+      opencode: config.opencode,
       claudeCode: config.claudeCode,
       codex: config.codex,
       pi: config.pi,

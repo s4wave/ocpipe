@@ -9,7 +9,7 @@ import type { z } from 'zod/v4'
 // ============================================================================
 
 /** Backend type for running prompts. */
-export type BackendType = 'claude-code' | 'codex' | 'pi' | 'omp'
+export type BackendType = 'opencode' | 'claude-code' | 'codex' | 'pi' | 'omp'
 
 /** Reasoning effort for Codex SDK threads. */
 export type CodexReasoningEffort =
@@ -120,6 +120,16 @@ export interface PiOptions {
   env?: Record<string, string>
 }
 
+/** OpenCode CLI specific session options. */
+export interface OpenCodeOptions {
+  /** Path to the OpenCode executable (default: `opencode` from PATH). */
+  command?: string
+  /** Prompt-file directory; defaults to ocpipe's temporary directory, not `.opencode`. */
+  promptDir?: string
+  /** Extra environment variables passed to the OpenCode subprocess. */
+  env?: Record<string, string>
+}
+
 /** Oh My Pi CLI specific session options. */
 export interface OmpOptions {
   /** Path to the Oh My Pi executable (default: `omp` from PATH). */
@@ -156,7 +166,7 @@ export interface OmpOptions {
 export interface ModelConfig {
   /** Backend to use (default: 'omp'). */
   backend?: BackendType
-  /** Provider ID for provider-qualified backends. */
+  /** Provider ID for provider-qualified backends such as OpenCode. */
   providerID?: string
   modelID: string
   /** Model variant for reasoning effort (e.g. 'low', 'medium', 'high', 'max'). */
@@ -179,6 +189,8 @@ export interface ExecutionContext {
   timeoutSec: number
   /** Target working directory for backend tools. */
   workdir?: string
+  /** OpenCode CLI specific options. */
+  opencode?: OpenCodeOptions
   /** Claude Code specific options. */
   claudeCode?: ClaudeCodeOptions
   /** Codex SDK specific options. */
@@ -399,6 +411,8 @@ export interface PipelineConfig {
   timeoutSec?: number
   /** Target working directory for backend tools. */
   workdir?: string
+  /** OpenCode CLI specific options. */
+  opencode?: OpenCodeOptions
   /** Claude Code specific options. */
   claudeCode?: ClaudeCodeOptions
   /** Codex SDK specific options. */
@@ -437,6 +451,8 @@ export interface RunAgentOptions {
   timeoutSec?: number
   /** Target working directory for backend tools. */
   workdir?: string
+  /** OpenCode CLI specific options. */
+  opencode?: OpenCodeOptions
   /** Claude Code specific options. */
   claudeCode?: ClaudeCodeOptions
   /** Codex SDK specific options. */

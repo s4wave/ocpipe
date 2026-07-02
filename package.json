@@ -1,7 +1,7 @@
 {
   "name": "ocpipe",
   "version": "0.6.10",
-  "description": "SDK for LLM pipelines with OMP, Codex, Claude Code, Pi, and Zod",
+  "description": "SDK for LLM pipelines with OpenCode, OMP, Codex, Claude Code, Pi, and Zod",
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -18,6 +18,7 @@
   "keywords": [
     "dspy",
     "omp",
+    "opencode",
     "codex",
     "claude-code",
     "typescript",

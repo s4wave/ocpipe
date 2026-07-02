@@ -1,5 +1,5 @@
 <p align="center"><strong>ocpipe</strong></p>
-<p align="center">Build LLM pipelines with Oh My Pi, Claude Code, Codex, Pi, and <a href="https://zod.dev">Zod</a>.</p>
+<p align="center">Build LLM pipelines with Oh My Pi, OpenCode, Claude Code, Codex, Pi, and <a href="https://zod.dev">Zod</a>.</p>
 <p align="center">Inspired by <a href="https://github.com/stanfordnlp/dspy">DSPy</a>.</p>
 <p align="center">
   <a href="https://www.npmjs.com/package/ocpipe"><img alt="npm" src="https://img.shields.io/npm/v/ocpipe?style=flat-square" /></a>
@@ -11,7 +11,7 @@
 - **Type-safe** Define inputs and outputs with Zod schemas
 - **Modular** Compose modules into complex pipelines
 - **Checkpoints** Resume from any step
-- **Multi-backend** Choose between Oh My Pi, Claude Code SDK, Codex SDK, or Pi
+- **Multi-backend** Choose between Oh My Pi, OpenCode, Claude Code SDK, Codex SDK, or Pi
 - **Auto-correction** Fixes schema mismatches automatically
 
 ### Quick Start
@@ -50,7 +50,7 @@ type GreetOut = InferOutputs<typeof Greet> // { greeting: string }
 
 ### Backends
 
-ocpipe supports four backends for running LLM prompts:
+ocpipe supports five backends for running LLM prompts:
 
 **Oh My Pi** (default) - Uses the `omp` CLI in headless JSON print mode.
 
@@ -63,6 +63,13 @@ const pipeline = new Pipeline(
   },
   createBaseState,
 )
+```
+
+**OpenCode** - Uses the `opencode` CLI. ocpipe passes prompt files directly and does not create or reference `.opencode/agents` definitions.
+
+```typescript
+defaultModel: { backend: 'opencode', providerID: 'anthropic', modelID: 'claude-sonnet-4' },
+opencode: { command: 'opencode' },
 ```
 
 **Claude Code** - Uses `@anthropic-ai/claude-agent-sdk`. Install as a peer dependency.
@@ -92,6 +99,8 @@ pi: { command: 'pi' },
 
 **For Oh My Pi:** Install the `omp` CLI and authenticate the models it uses.
 
+**For OpenCode backend:** Install the `opencode` CLI and authenticate the providers it uses. ocpipe does not require a `.opencode` directory.
+
 **For Claude Code backend:** Install the SDK as a peer dependency:
 
 ```bash
@@ -114,6 +123,6 @@ bun add @openai/codex-sdk
 
 ---
 
-[Oh My Pi](https://github.com/aperturerobotics/oh-my-pi)
+[Oh My Pi](https://github.com/aperturerobotics/oh-my-pi) · [OpenCode](https://github.com/sst/opencode)
 
 <sub>An [Aperture Robotics](https://github.com/aperturerobotics) project.</sub>
