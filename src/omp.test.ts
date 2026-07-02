@@ -19,7 +19,6 @@ describe('runOmpAgent', () => {
     const result = await runOmpAgent(
       {
         prompt: 'reply with exactly OMP_PROVE_OK',
-        agent: 'default',
         model: { backend: 'omp', modelID: 'gpt-5.5' },
         workdir: '/workspace',
         omp: {
@@ -85,7 +84,6 @@ describe('runOmpAgent', () => {
     await runOmpAgent(
       {
         prompt: 'continue',
-        agent: 'default',
         model: { backend: 'omp', modelID: 'gpt-5.5' },
         sessionId: 'omp-session-1',
       },
@@ -107,7 +105,6 @@ describe('runOmpAgent', () => {
       runOmpAgent(
         {
           prompt: 'hello',
-          agent: 'default',
           model: { backend: 'omp', modelID: 'gpt-5.5' },
         },
         process,
@@ -121,7 +118,6 @@ describe('runOmpAgent', () => {
     const result = await runOmpAgent(
       {
         prompt: 'hello',
-        agent: 'default',
         model: { backend: 'omp', modelID: 'gpt-5.5' },
       },
       process,

@@ -21,7 +21,6 @@ describe('runPiAgent', () => {
     const result = await runPiAgent(
       {
         prompt: 'reply with exactly LOCAL_PROVE_OK',
-        agent: 'default',
         model: { backend: 'pi', modelID: 'gemma' },
         workdir: '/workspace',
         pi: {
@@ -73,7 +72,6 @@ describe('runPiAgent', () => {
     await runPiAgent(
       {
         prompt: 'continue',
-        agent: 'default',
         model: { backend: 'pi', modelID: 'gemma' },
         sessionId: 'pi-session-1',
       },
@@ -95,7 +93,6 @@ describe('runPiAgent', () => {
       runPiAgent(
         {
           prompt: 'hello',
-          agent: 'default',
           model: { backend: 'pi', modelID: 'gemma' },
         },
         new FakePiProcess(conn),
@@ -116,7 +113,6 @@ describe('runPiAgent', () => {
       runPiAgent(
         {
           prompt: 'hello',
-          agent: 'default',
           model: { backend: 'pi', modelID: 'gemma' },
         },
         new FakePiProcess(conn),

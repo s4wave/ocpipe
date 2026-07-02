@@ -134,18 +134,20 @@ export class MockAgentBackend {
 export function createMockContext(
   overrides?: Partial<{
     sessionId: string
-    defaultModel: { providerID: string; modelID: string }
-    defaultAgent: string
+    defaultModel: {
+      backend?: 'claude-code' | 'codex' | 'pi' | 'omp'
+      providerID?: string
+      modelID: string
+    }
     timeoutSec: number
   }>,
 ) {
   return {
     sessionId: overrides?.sessionId,
     defaultModel: overrides?.defaultModel ?? {
-      providerID: 'github-copilot',
-      modelID: 'grok-code-fast-1',
+      backend: 'omp',
+      modelID: 'gpt-5.5',
     },
-    defaultAgent: overrides?.defaultAgent ?? 'general',
     timeoutSec: overrides?.timeoutSec ?? 60,
   }
 }

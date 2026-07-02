@@ -71,8 +71,7 @@ async function main() {
   const pipeline = new Pipeline(
     {
       name: 'correction-demo',
-      defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
-      defaultAgent: 'default',
+      defaultModel: { backend: 'omp', modelID: 'gpt-5.5' },
       checkpointDir: './ckpt',
       logDir: './logs',
     },

@@ -1,7 +1,8 @@
 /**
  * ocpipe Predict class.
  *
- * Executes a signature by generating a prompt, calling OpenCode, and parsing the response.
+ * Executes a signature by generating a prompt, calling a backend, and parsing
+ * the response.
  */
 
 import { z } from 'zod/v4'
@@ -37,8 +38,6 @@ import {
 
 /** Configuration for a Predict instance. */
 export interface PredictConfig {
-  /** Override the pipeline's default agent. */
-  agent?: string
   /** Override the pipeline's default model. */
   model?: ModelConfig
   /** Start a fresh session (default: false, reuses context). */
@@ -71,7 +70,6 @@ export class Predict<S extends AnySignature> {
 
     const agentResult = await runAgent({
       prompt,
-      agent: this.config.agent ?? ctx.defaultAgent,
       model: this.config.model ?? ctx.defaultModel,
       sessionId: this.config.newSession ? undefined : ctx.sessionId,
       timeoutSec: ctx.timeoutSec,
@@ -206,7 +204,6 @@ export class Predict<S extends AnySignature> {
         prompt: repairPrompt,
         model: correctionModel ?? ctx.defaultModel,
         sessionId: correctionModel ? undefined : sessionId,
-        agent: ctx.defaultAgent,
         timeoutSec: ctx.timeoutSec,
         workdir: ctx.workdir,
         claudeCode: ctx.claudeCode,
@@ -286,7 +283,6 @@ export class Predict<S extends AnySignature> {
         prompt: patchPrompt,
         model: correctionModel ?? ctx.defaultModel,
         sessionId: correctionModel ? undefined : sessionId,
-        agent: ctx.defaultAgent,
         timeoutSec: ctx.timeoutSec,
         workdir: ctx.workdir,
         claudeCode: ctx.claudeCode,
@@ -399,8 +395,7 @@ export class Predict<S extends AnySignature> {
     // Add field descriptions from our config (toJSONSchema uses .describe() metadata)
     // Since our FieldConfig has a separate desc field, merge it in
     const props = jsonSchema.properties as
-      | Record<string, Record<string, unknown>>
-      | undefined
+      Record<string, Record<string, unknown>> | undefined
     if (props) {
       for (const [name, config] of Object.entries(this.sig.outputs) as [
         string,

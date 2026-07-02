@@ -56,7 +56,6 @@ describe.skipIf(!runIntegration)('ocpipe Integration', () => {
       const ctx: ExecutionContext = {
         sessionId: undefined,
         defaultModel: GROK_MODEL,
-        defaultAgent: 'general',
         timeoutSec: 60,
       }
 
@@ -90,7 +89,6 @@ describe.skipIf(!runIntegration)('ocpipe Integration', () => {
       const ctx: ExecutionContext = {
         sessionId: undefined,
         defaultModel: GROK_MODEL,
-        defaultAgent: 'general',
         timeoutSec: 60,
       }
 
@@ -138,7 +136,6 @@ describe.skipIf(!runIntegration)('ocpipe Integration', () => {
       const ctx: ExecutionContext = {
         sessionId: undefined,
         defaultModel: GROK_MODEL,
-        defaultAgent: 'general',
         timeoutSec: 60,
       }
 
@@ -211,7 +208,6 @@ describe.skipIf(!runIntegration)('ocpipe Integration', () => {
         {
           name: 'mood-analysis',
           defaultModel: GROK_MODEL,
-          defaultAgent: 'general',
           checkpointDir: testCheckpointDir,
           logDir: testCheckpointDir,
         },

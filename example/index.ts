@@ -3,9 +3,8 @@
  *
  * Demonstrates running an ocpipe module in a pipeline.
  *
- * Usage:
- *   npx tsx example/index.ts              # Use opencode backend
- *   npx tsx example/index.ts --claude-code # Use claude-code backend
+ *   npx tsx example/index.ts               # Use OMP backend
+ *   npx tsx example/index.ts --claude-code # Use Claude Code backend
  */
 
 import { Pipeline, createBaseState } from '../src/index.js'
@@ -18,10 +17,10 @@ async function main() {
   const pipeline = new Pipeline(
     {
       name: 'hello-world',
-      defaultModel: useClaudeCode
-        ? { backend: 'claude-code', modelID: 'sonnet' }
-        : { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
-      defaultAgent: useClaudeCode ? 'claude-code' : 'default',
+      defaultModel:
+        useClaudeCode ?
+          { backend: 'claude-code', modelID: 'sonnet' }
+        : { backend: 'omp', modelID: 'gpt-5.5' },
       checkpointDir: './ckpt',
       logDir: './logs',
     },

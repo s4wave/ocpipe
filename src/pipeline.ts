@@ -30,7 +30,6 @@ export class Pipeline<S extends BaseState> {
     this.ctx = {
       sessionId: undefined,
       defaultModel: config.defaultModel,
-      defaultAgent: config.defaultAgent,
       timeoutSec: config.timeoutSec ?? 3600,
       workdir: config.workdir,
       claudeCode: config.claudeCode,
@@ -89,8 +88,8 @@ export class Pipeline<S extends BaseState> {
           result: result as StepResult<unknown>,
         })
 
-        // Update opencode session in state
-        this.state.opencodeSessionId = this.ctx.sessionId
+        // Update backend session in state.
+        this.state.agentSessionId = this.ctx.sessionId
 
         await this.saveCheckpoint()
         return result
@@ -159,7 +158,7 @@ export class Pipeline<S extends BaseState> {
     }
   }
 
-  /** getSessionId returns the current OpenCode session ID. */
+  /** getSessionId returns the current backend session ID. */
   getSessionId(): string | undefined {
     return this.ctx.sessionId
   }
@@ -189,9 +188,9 @@ export class Pipeline<S extends BaseState> {
       const pipeline = new Pipeline<S>(config, () => state)
       pipeline.state = state
 
-      // Restore context from state
-      if (state.opencodeSessionId) {
-        pipeline.ctx.sessionId = state.opencodeSessionId
+      // Restore context from state.
+      if (state.agentSessionId) {
+        pipeline.ctx.sessionId = state.agentSessionId
       }
 
       // Restore step number

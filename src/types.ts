@@ -8,29 +8,20 @@ import type { z } from 'zod/v4'
 // Model Configuration
 // ============================================================================
 
-/** Backend type for running agents. */
-export type BackendType = 'opencode' | 'claude-code' | 'codex' | 'pi' | 'omp'
+/** Backend type for running prompts. */
+export type BackendType = 'claude-code' | 'codex' | 'pi' | 'omp'
 
 /** Reasoning effort for Codex SDK threads. */
 export type CodexReasoningEffort =
-  | 'minimal'
-  | 'low'
-  | 'medium'
-  | 'high'
-  | 'xhigh'
+  'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
 
 /** Codex sandbox mode. */
 export type CodexSandboxMode =
-  | 'read-only'
-  | 'workspace-write'
-  | 'danger-full-access'
+  'read-only' | 'workspace-write' | 'danger-full-access'
 
 /** Codex approval policy. */
 export type CodexApprovalPolicy =
-  | 'never'
-  | 'on-request'
-  | 'on-failure'
-  | 'untrusted'
+  'never' | 'on-request' | 'on-failure' | 'untrusted'
 
 /** Codex web search mode. */
 export type CodexWebSearchMode = 'disabled' | 'cached' | 'live'
@@ -45,10 +36,7 @@ export type CodexConfigValue =
 
 /** Permission mode for Claude Code sessions. */
 export type PermissionMode =
-  | 'default'
-  | 'acceptEdits'
-  | 'bypassPermissions'
-  | 'plan'
+  'default' | 'acceptEdits' | 'bypassPermissions' | 'plan'
 
 /** Subagent definition for Claude Code's Task tool dispatch. */
 export interface AgentDefinition {
@@ -75,8 +63,7 @@ export interface ClaudeCodeOptions {
    * Can be a full string or use the preset format with append.
    */
   systemPrompt?:
-    | string
-    | { type: 'preset'; preset: 'claude_code'; append: string }
+    string | { type: 'preset'; preset: 'claude_code'; append: string }
   /**
    * Subagent definitions for parallel task dispatch via the Task tool.
    * Keys are agent names, values are agent definitions.
@@ -167,9 +154,9 @@ export interface OmpOptions {
 
 /** Model configuration for LLM backends. */
 export interface ModelConfig {
-  /** Backend to use (default: 'opencode'). */
+  /** Backend to use (default: 'omp'). */
   backend?: BackendType
-  /** Provider ID (required for OpenCode, ignored for Claude Code). */
+  /** Provider ID for provider-qualified backends. */
   providerID?: string
   modelID: string
   /** Model variant for reasoning effort (e.g. 'low', 'medium', 'high', 'max'). */
@@ -184,15 +171,13 @@ export interface ModelConfig {
 
 /** Execution context passed through pipeline execution. */
 export interface ExecutionContext {
-  /** Current OpenCode session ID (for continuity). */
+  /** Current backend session ID for continuity. */
   sessionId?: string
   /** Default model for predictions. */
   defaultModel: ModelConfig
-  /** Default agent for predictions. */
-  defaultAgent: string
   /** Timeout in seconds for agent calls. */
   timeoutSec: number
-  /** Working directory for opencode (where .opencode/agents/ lives). */
+  /** Target working directory for backend tools. */
   workdir?: string
   /** Claude Code specific options. */
   claudeCode?: ClaudeCodeOptions
@@ -218,7 +203,7 @@ export interface StepResult<T> {
   stepName: string
   /** Execution duration in milliseconds. */
   duration: number
-  /** OpenCode session ID used. */
+  /** Backend session ID used. */
   sessionId: string
   /** Model used for this step. */
   model: ModelConfig
@@ -251,8 +236,8 @@ export interface BaseState {
   sessionId: string
   /** ISO timestamp when pipeline started. */
   startedAt: string
-  /** Current OpenCode session ID (for continuity). */
-  opencodeSessionId?: string
+  /** Current backend session ID for continuity. */
+  agentSessionId?: string
   /** Current phase name (for resume). */
   phase: string
   /** All completed steps. */
@@ -271,7 +256,7 @@ export interface PredictResult<T> {
   data: T
   /** Raw response text from the LLM. */
   raw: string
-  /** OpenCode session ID. */
+  /** Backend session ID. */
   sessionId: string
   /** Execution duration in milliseconds. */
   duration: number
@@ -364,9 +349,7 @@ export interface CorrectionConfig {
 
 /** Error codes for field errors, enabling robust error type detection. */
 export type FieldErrorCode =
-  | 'json_parse_failed'
-  | 'no_json_found'
-  | 'schema_validation_failed'
+  'json_parse_failed' | 'no_json_found' | 'schema_validation_failed'
 
 /** A field-level error from schema validation. */
 export interface FieldError {
@@ -406,8 +389,6 @@ export interface PipelineConfig {
   name: string
   /** Default model for predictions. */
   defaultModel: ModelConfig
-  /** Default agent for predictions. */
-  defaultAgent: string
   /** Directory for checkpoint files. */
   checkpointDir: string
   /** Directory for log files. */
@@ -416,7 +397,7 @@ export interface PipelineConfig {
   retry?: RetryConfig
   /** Default timeout in seconds. */
   timeoutSec?: number
-  /** Working directory for opencode (where .opencode/agents/ lives). */
+  /** Target working directory for backend tools. */
   workdir?: string
   /** Claude Code specific options. */
   claudeCode?: ClaudeCodeOptions
@@ -444,19 +425,17 @@ export interface RunOptions {
 // Agent Types
 // ============================================================================
 
-/** Options for running an OpenCode agent. */
+/** Options for running a prompt through a backend. */
 export interface RunAgentOptions {
-  /** The prompt to send to the agent. */
+  /** The prompt to send to the backend. */
   prompt: string
-  /** Agent type (e.g., "journey-creator", "explore", "general"). */
-  agent: string
   /** Model to use. */
   model: ModelConfig
   /** Existing session ID to continue. */
   sessionId?: string
   /** Timeout in seconds. */
   timeoutSec?: number
-  /** Working directory for opencode (where .opencode/agents/ lives). */
+  /** Target working directory for backend tools. */
   workdir?: string
   /** Claude Code specific options. */
   claudeCode?: ClaudeCodeOptions
@@ -470,7 +449,7 @@ export interface RunAgentOptions {
   signal?: AbortSignal
 }
 
-/** Result from running an OpenCode agent. */
+/** Result from running a prompt through a backend. */
 export interface RunAgentResult {
   /** The text response from the agent. */
   text: string

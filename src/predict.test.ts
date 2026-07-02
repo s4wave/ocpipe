@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Predict } from './predict.js'
 import { signature, field } from './signature.js'
 import { MockAgentBackend, createMockContext } from './testing.js'
+import type { ExecutionContext } from './types.js'
 import * as agentModule from './agent.js'
 
 // Mock the agent module - Bun-compatible approach using spyOn
@@ -77,16 +78,31 @@ describe('Predict', () => {
     expect(call?.sessionId).toBeUndefined()
   })
 
-  it('uses custom agent from config', async () => {
+  it('executes without an agent and forwards only runtime options', async () => {
     mockBackend.addJsonResponse({ name: 'Test', age: 1 })
 
-    const predict = new Predict(TestSig, { agent: 'custom-agent' })
-    const ctx = createMockContext()
+    const predict = new Predict(TestSig)
+    const ctx = {
+      sessionId: 'existing-session',
+      defaultModel: { backend: 'omp', modelID: 'gpt-5.5' },
+      timeoutSec: 45,
+      workdir: '/workspace',
+      omp: { command: 'omp' },
+    } as ExecutionContext
 
     await predict.execute({ text: 'Test' }, ctx)
 
     const call = mockBackend.getLastCall()
-    expect(call?.agent).toBe('custom-agent')
+    expect(call).toMatchObject({
+      model: { backend: 'omp', modelID: 'gpt-5.5' },
+      sessionId: 'existing-session',
+      timeoutSec: 45,
+      workdir: '/workspace',
+      omp: { command: 'omp' },
+    })
+    expect(call?.prompt).toContain('Test')
+    expect(call).not.toHaveProperty('agent')
+    expect(call).not.toHaveProperty('defaultAgent')
   })
 
   it('uses custom model from config', async () => {

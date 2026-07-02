@@ -6,7 +6,7 @@ import { signature, field } from './signature.js'
 import { createBaseState } from './state.js'
 import { TMP_DIR } from './paths.js'
 import { MockAgentBackend, createMockContext } from './testing.js'
-import type { ExecutionContext, BaseState } from './types.js'
+import type { ExecutionContext, BaseState, PipelineConfig } from './types.js'
 import * as agentModule from './agent.js'
 import * as fs from 'fs/promises'
 import { join } from 'path'
@@ -104,7 +104,6 @@ describe('Pipeline', () => {
   const defaultConfig = {
     name: 'test-pipeline',
     defaultModel: { providerID: 'test', modelID: 'test-model' },
-    defaultAgent: 'general',
     checkpointDir: testCheckpointDir,
     logDir: TMP_DIR,
   }
@@ -134,6 +133,33 @@ describe('Pipeline', () => {
     expect(result.attempt).toBe(1)
     expect(pipeline.state.steps).toHaveLength(1)
     expect(pipeline.state.steps[0]?.stepName).toBe('TestModule')
+  })
+
+  it('runs a basic pipeline without a defaultAgent config', async () => {
+    mockBackend.addJsonResponse({ output: 'result' })
+
+    const noAgentConfig = {
+      name: 'no-agent-pipeline',
+      defaultModel: { backend: 'omp', modelID: 'gpt-5.5' },
+      checkpointDir: testCheckpointDir,
+      logDir: TMP_DIR,
+      timeoutSec: 45,
+      omp: { command: 'omp' },
+    } satisfies PipelineConfig
+    const pipeline = new Pipeline(noAgentConfig, createBaseState)
+    const module = new TestModule()
+
+    const result = await pipeline.run(module, { input: 'test' })
+
+    expect(result.data).toEqual({ output: 'result' })
+    const call = mockBackend.getLastCall()
+    expect(call).toMatchObject({
+      model: { backend: 'omp', modelID: 'gpt-5.5' },
+      timeoutSec: 45,
+      omp: { command: 'omp' },
+    })
+    expect(call).not.toHaveProperty('agent')
+    expect(call).not.toHaveProperty('defaultAgent')
   })
 
   it('uses custom step name', async () => {

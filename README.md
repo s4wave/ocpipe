@@ -1,5 +1,5 @@
 <p align="center"><strong>ocpipe</strong></p>
-<p align="center">Build LLM pipelines with <a href="https://github.com/sst/opencode">OpenCode</a>, <a href="https://github.com/anthropics/claude-code">Claude Code</a>, Oh My Pi, Pi, and <a href="https://zod.dev">Zod</a>.</p>
+<p align="center">Build LLM pipelines with Oh My Pi, Claude Code, Codex, Pi, and <a href="https://zod.dev">Zod</a>.</p>
 <p align="center">Inspired by <a href="https://github.com/stanfordnlp/dspy">DSPy</a>.</p>
 <p align="center">
   <a href="https://www.npmjs.com/package/ocpipe"><img alt="npm" src="https://img.shields.io/npm/v/ocpipe?style=flat-square" /></a>
@@ -11,7 +11,7 @@
 - **Type-safe** Define inputs and outputs with Zod schemas
 - **Modular** Compose modules into complex pipelines
 - **Checkpoints** Resume from any step
-- **Multi-backend** Choose between OpenCode (75+ providers), Claude Code SDK, Codex SDK, Oh My Pi, or Pi
+- **Multi-backend** Choose between Oh My Pi, Claude Code SDK, Codex SDK, or Pi
 - **Auto-correction** Fixes schema mismatches automatically
 
 ### Quick Start
@@ -32,8 +32,9 @@ const Greet = signature({
 const pipeline = new Pipeline(
   {
     name: 'hello-world',
-    defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
-    defaultAgent: 'default',
+    defaultModel: { backend: 'omp', modelID: 'gpt-5.5' },
+    checkpointDir: './ckpt',
+    logDir: './logs',
   },
   createBaseState,
 )
@@ -49,19 +50,16 @@ type GreetOut = InferOutputs<typeof Greet> // { greeting: string }
 
 ### Backends
 
-ocpipe supports five backends for running LLM agents:
+ocpipe supports four backends for running LLM prompts:
 
-**OpenCode** (default) - Requires `opencode` CLI in your PATH. Supports 75+ providers.
+**Oh My Pi** (default) - Uses the `omp` CLI in headless JSON print mode.
 
 ```typescript
 const pipeline = new Pipeline(
   {
     name: 'my-pipeline',
-    defaultModel: {
-      providerID: 'anthropic',
-      modelID: 'claude-sonnet-4-20250514',
-    },
-    defaultAgent: 'default',
+    defaultModel: { backend: 'omp', modelID: 'gpt-5.5' },
+    omp: { command: 'omp', approvalMode: 'yolo', thinking: 'high' },
   },
   createBaseState,
 )
@@ -83,13 +81,6 @@ defaultModel: { backend: 'codex', modelID: 'gpt-5.4' },
 codex: { sandbox: 'read-only', reasoningEffort: 'high' },
 ```
 
-**Oh My Pi** - Uses the `omp` CLI in headless JSON print mode.
-
-```typescript
-defaultModel: { backend: 'omp', modelID: 'gpt-5.5' },
-omp: { command: 'omp', approvalMode: 'yolo', thinking: 'high' },
-```
-
 **Pi** - Uses the `pi` coding-agent CLI JSONL RPC mode.
 
 ```typescript
@@ -99,10 +90,7 @@ pi: { command: 'pi' },
 
 ### Requirements
 
-**For OpenCode backend:** Currently requires [this OpenCode fork](https://github.com/paralin/opencode). Once the following PRs are merged, the official release will work:
-
-- [#5426](https://github.com/anomalyco/opencode/pull/5426) - Adds session export command
-- [#5339](https://github.com/anomalyco/opencode/pull/5339) - Adds `--tools` flag to limit available tools (optional)
+**For Oh My Pi:** Install the `omp` CLI and authenticate the models it uses.
 
 **For Claude Code backend:** Install the SDK as a peer dependency:
 
@@ -126,6 +114,6 @@ bun add @openai/codex-sdk
 
 ---
 
-[Discord](https://discord.gg/opencode) · [OpenCode](https://github.com/sst/opencode)
+[Oh My Pi](https://github.com/aperturerobotics/oh-my-pi)
 
 <sub>An [Aperture Robotics](https://github.com/aperturerobotics) project.</sub>

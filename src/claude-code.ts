@@ -11,7 +11,7 @@
  */
 
 import { execSync } from 'child_process'
-import { existsSync, readFileSync } from 'fs'
+import { existsSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
 import {
@@ -66,9 +66,14 @@ function resolveClaudeCodePath(explicit?: string): string | undefined {
   if (explicit) return explicit
 
   try {
-    const found = execSync('which claude', { encoding: 'utf8', timeout: 3000 }).trim()
+    const found = execSync('which claude', {
+      encoding: 'utf8',
+      timeout: 3000,
+    }).trim()
     if (found) return found
-  } catch { /* which not found or timed out — fall through to defaults */ }
+  } catch {
+    /* which not found or timed out — fall through to defaults */
+  }
 
   const defaults = [
     join(homedir(), '.local', 'bin', 'claude'),
@@ -88,21 +93,6 @@ function normalizeModelId(modelId: string): string {
   if (lower.includes('sonnet')) return 'sonnet'
   if (lower.includes('haiku')) return 'haiku'
   return modelId
-}
-
-/** loadAgentDefinition loads an OpenCode agent definition file and extracts the
- * markdown body (stripping the YAML frontmatter) for use as a system prompt. */
-function loadAgentDefinition(agent: string, workdir?: string): string | undefined {
-  if (!agent || !workdir) return undefined
-
-  const agentPath = join(workdir, '.opencode', 'agents', `${agent}.md`)
-  if (!existsSync(agentPath)) return undefined
-
-  const content = readFileSync(agentPath, 'utf8')
-
-  // Strip YAML frontmatter (--- delimited block at the start).
-  const stripped = content.replace(/^---\n[\s\S]*?\n---\n*/, '')
-  return stripped.trim() || undefined
 }
 
 /** Extract text from assistant messages. */
@@ -147,7 +137,6 @@ export async function runClaudeCodeAgent(
 ): Promise<RunAgentResult> {
   const {
     prompt,
-    agent,
     model,
     sessionId,
     timeoutSec = 3600,
@@ -169,8 +158,8 @@ export async function runClaudeCodeAgent(
   // Build query options with configurable permission mode (default: acceptEdits)
   const permissionMode = claudeCode?.permissionMode ?? 'acceptEdits'
 
-  // Resolve system prompt: explicit option > agent definition file > none
-  const systemPrompt = claudeCode?.systemPrompt ?? loadAgentDefinition(agent, workdir)
+  // Resolve system prompt from explicit configuration only.
+  const systemPrompt = claudeCode?.systemPrompt
 
   // Bridge external abort signal to an AbortController for the SDK
   const abortController = new AbortController()
@@ -217,16 +206,22 @@ export async function runClaudeCodeAgent(
       }),
     // Resolve executable path: explicit option > PATH lookup > default locations
     ...(() => {
-      const resolved = resolveClaudeCodePath(claudeCode?.pathToClaudeCodeExecutable)
+      const resolved = resolveClaudeCodePath(
+        claudeCode?.pathToClaudeCodeExecutable,
+      )
       return resolved ? { pathToClaudeCodeExecutable: resolved } : {}
     })(),
   }
 
   if (claudeCode?.agents) {
-    console.error(`[ocpipe] Subagents defined: ${Object.keys(claudeCode.agents).join(', ')}`)
+    console.error(
+      `[ocpipe] Subagents defined: ${Object.keys(claudeCode.agents).join(', ')}`,
+    )
   }
   if (claudeCode?.allowedTools) {
-    console.error(`[ocpipe] Allowed tools: ${claudeCode.allowedTools.join(', ')}`)
+    console.error(
+      `[ocpipe] Allowed tools: ${claudeCode.allowedTools.join(', ')}`,
+    )
   }
   console.error(
     `\n>>> Claude Code [${modelStr}] [${permissionMode}] ${sessionInfo}: ${promptPreview}...`,

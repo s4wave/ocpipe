@@ -1,5 +1,5 @@
 /**
- * ocpipe: LLM pipelines with OpenCode and Zod.
+ * ocpipe: LLM pipelines with coding-agent backends and Zod.
  *
  * Inspired by DSPy.
  *
@@ -22,8 +22,7 @@
  * // Run in a pipeline
  * const pipeline = new Pipeline({
  *   name: 'my-workflow',
- *   defaultModel: { providerID: 'opencode', modelID: 'minimax-m2.1-free' },
- *   defaultAgent: 'general',
+ *   defaultModel: { backend: 'omp', modelID: 'gpt-5.5' },
  *   checkpointDir: './ckpt',
  *   logDir: './logs',
  * }, createBaseState)

@@ -75,7 +75,6 @@ describe('runCodexAgent', () => {
   test('starts a Codex SDK thread with mapped options', async () => {
     const result = await runCodexAgent({
       prompt: 'hello',
-      agent: 'default',
       model: { backend: 'codex', modelID: 'gpt-5.4' },
       timeoutSec: 10,
       workdir: '/tmp/project',
@@ -132,7 +131,6 @@ describe('runCodexAgent', () => {
   test('resumes an existing Codex SDK thread', async () => {
     const result = await runCodexAgent({
       prompt: 'continue',
-      agent: 'default',
       model: { backend: 'codex', modelID: 'gpt-5.4' },
       sessionId: 'thread-existing',
       workdir: '/tmp/project',
@@ -151,7 +149,6 @@ describe('runCodexAgent', () => {
   test('ephemeral mode starts a fresh thread and returns no session ID', async () => {
     const result = await runCodexAgent({
       prompt: 'fresh',
-      agent: 'default',
       model: { backend: 'codex', modelID: 'gpt-5.4' },
       sessionId: 'thread-existing',
       workdir: '/tmp/project',
@@ -204,7 +201,6 @@ describe('runCodexAgent', () => {
 
     const result = await runCodexAgent({
       prompt: 'go',
-      agent: 'default',
       model: { backend: 'codex', modelID: 'gpt-5.4' },
       workdir: '/tmp/project',
     })
