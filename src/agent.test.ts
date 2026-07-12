@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Mock } from 'vitest'
 import { EventEmitter } from 'events'
-import { mkdtemp, rm, stat } from 'fs/promises'
+import { mkdtemp, readdir, rm, stat } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join, sep } from 'path'
 import type { RunAgentResult } from './types.js'
+import { TMP_DIR } from './paths.js'
 
 const childProcess = vi.hoisted(() => ({
   spawn: vi.fn(),
@@ -38,6 +39,59 @@ function successfulOpenCodeProcess() {
   queueMicrotask(() => {
     proc.stdout.emit('data', Buffer.from('OpenCode response'))
     proc.emit('close', 0)
+  })
+  return proc
+}
+class FakeReadable extends EventEmitter {
+  private paused = false
+
+  isPaused(): boolean {
+    return this.paused
+  }
+
+  pause(): this {
+    this.paused = true
+    return this
+  }
+
+  resume(): this {
+    if (this.paused) {
+      this.paused = false
+      this.emit('resume')
+    }
+    return this
+  }
+}
+
+function floodingOpenCodeProcess() {
+  const proc = new EventEmitter() as FakeProcess & { killed?: boolean }
+  const stdout = new FakeReadable()
+  const stderr = new FakeReadable()
+  proc.stdout = stdout
+  proc.stderr = stderr
+  proc.kill = vi.fn(() => {
+    proc.killed = true
+  })
+  const chunk = Buffer.alloc(64 * 1024, 'x')
+  const chunkCount = 512
+  let emitted = 0
+
+  queueMicrotask(() => {
+    stderr.emit('data', Buffer.from('[session:flood-session]\n'))
+    const emitNext = () => {
+      if (stdout.isPaused()) {
+        stdout.once('resume', emitNext)
+        return
+      }
+      if (emitted === chunkCount) {
+        proc.emit('close', 0)
+        return
+      }
+      emitted++
+      stdout.emit('data', chunk)
+      queueMicrotask(emitNext)
+    }
+    emitNext()
   })
   return proc
 }
@@ -121,6 +175,44 @@ describe('runAgent backend selection', () => {
       expect(promptFile?.startsWith(join(workdir, '.opencode'))).toBe(false)
       expect(await pathExists(join(workdir, '.opencode'))).toBe(false)
     } finally {
+      await rm(workdir, { recursive: true, force: true })
+    }
+  })
+  test('streams large child output through disk without an in-memory chunk accumulator', async () => {
+    const workdir = await mkdtemp(join(tmpdir(), 'ocpipe-run-agent-stream-'))
+    const filesBefore = new Set(
+      (await readdir(TMP_DIR)).filter((name) =>
+        name.startsWith('ocpipe_output_'),
+      ),
+    )
+    const stderrWrite = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation((() => true) as typeof process.stderr.write)
+    childProcess.spawn.mockImplementation(floodingOpenCodeProcess)
+    try {
+      const result = await runAgent({
+        prompt: 'stream a large response',
+        model: {
+          backend: 'opencode',
+          providerID: 'legacy-provider',
+          modelID: 'legacy-model',
+        },
+        workdir,
+        timeoutSec: 0,
+      })
+
+      expect(result.sessionId).toBe('flood-session')
+      expect(result.text).toHaveLength(32 * 1024 * 1024)
+      const filesAfter = new Set(
+        (await readdir(TMP_DIR)).filter((name) =>
+          name.startsWith('ocpipe_output_'),
+        ),
+      )
+      expect([...filesAfter].filter((name) => !filesBefore.has(name))).toEqual(
+        [],
+      )
+    } finally {
+      stderrWrite.mockRestore()
       await rm(workdir, { recursive: true, force: true })
     }
   })

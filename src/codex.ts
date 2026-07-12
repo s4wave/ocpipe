@@ -10,6 +10,7 @@ import {
   type RunResult,
   type ThreadOptions,
 } from '@openai/codex-sdk'
+import { OutputLimitError } from './errors.js'
 import { PROJECT_ROOT } from './paths.js'
 import type {
   CodexOptions,
@@ -18,28 +19,45 @@ import type {
   RunAgentResult,
 } from './types.js'
 
+const MAX_CODEX_LOG_LINE_BYTES = 1024 * 1024
+
 class CodexLogFilter {
   private buf = ''
   private suppressHtml = false
 
   write(text: string): string {
-    this.buf += text
     let out = ''
-    for (;;) {
-      const idx = this.buf.indexOf('\n')
+    let cursor = 0
+    while (cursor < text.length) {
+      const idx = text.indexOf('\n', cursor)
       if (idx < 0) {
-        return out
+        this.append(text.slice(cursor))
+        break
       }
-      const line = this.buf.slice(0, idx + 1)
-      this.buf = this.buf.slice(idx + 1)
-      out += this.filterLine(line)
+
+      const line = text.slice(cursor, idx + 1)
+      cursor = idx + 1
+      this.append(line)
+      out += this.filterLine(this.buf)
+      this.buf = ''
     }
+    return out
   }
 
   flush(): string {
     const line = this.buf
     this.buf = ''
     return this.filterLine(line)
+  }
+
+  private append(text: string): void {
+    if (
+      Buffer.byteLength(this.buf, 'utf8') + Buffer.byteLength(text, 'utf8') >
+      MAX_CODEX_LOG_LINE_BYTES
+    ) {
+      throw new OutputLimitError('Codex log line', MAX_CODEX_LOG_LINE_BYTES)
+    }
+    this.buf += text
   }
 
   private filterLine(line: string): string {
@@ -239,7 +257,9 @@ export function formatCodexRunSummary(summary: CodexRunSummary): string {
   return lines.join('\n')
 }
 
-function isFailedCommand(command: CodexRunSummary['commands'][number]): boolean {
+function isFailedCommand(
+  command: CodexRunSummary['commands'][number],
+): boolean {
   return (
     command.status === 'failed' ||
     (command.exitCode !== null && command.exitCode !== 0)

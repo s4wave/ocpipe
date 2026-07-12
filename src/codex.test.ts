@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { OutputLimitError } from './errors.js'
 
 const sdk = vi.hoisted(() => ({
   codex: vi.fn(),
@@ -54,6 +55,11 @@ describe('filterCodexLogText', () => {
       'after\n'
 
     expect(filterCodexLogText(text)).toBe('before\nafter\n')
+  })
+  test('rejects an unterminated log line that exceeds the bounded buffer', () => {
+    expect(() => filterCodexLogText('x'.repeat(1024 * 1024 + 1))).toThrow(
+      OutputLimitError,
+    )
   })
 })
 
