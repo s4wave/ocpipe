@@ -148,6 +148,8 @@ export interface OmpOptions {
   approvalMode?: string
   /** Thinking effort passed with `--thinking` (default: `high`). */
   thinking?: string
+  /** OpenAI service tier passed with `--service-tier` (for example `priority`); omitted when unset. */
+  serviceTier?: string
   /** Run Oh My Pi as a continuing headless goal. */
   goalMode?: boolean
   /** Goal objective; setting this also enables goal mode. */

@@ -176,6 +176,9 @@ function buildOmpArgs(
   if (thinking) {
     args.push('--thinking', thinking)
   }
+  if (omp?.serviceTier) {
+    args.push('--service-tier', omp.serviceTier)
+  }
   args.push(...(omp?.extraArgs ?? []))
   if (prompt) {
     args.push('--', prompt)

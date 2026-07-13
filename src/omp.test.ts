@@ -94,6 +94,33 @@ describe('runOmpAgent', () => {
     expect(process.request?.args).toContain('omp-session-1')
   })
 
+  test('passes --service-tier only when set', async () => {
+    const stdout = JSON.stringify({
+      type: 'message_end',
+      message: { role: 'assistant', content: [{ type: 'text', text: 'ok' }] },
+    })
+
+    const withTier = new FakeOmpProcess({ stdout })
+    await runOmpAgent(
+      {
+        prompt: 'go',
+        model: { backend: 'omp', modelID: 'gpt-5.5' },
+        omp: { serviceTier: 'priority' },
+      },
+      withTier,
+    )
+    const args = withTier.request?.args ?? []
+    expect(args).toContain('--service-tier')
+    expect(args[args.indexOf('--service-tier') + 1]).toBe('priority')
+
+    const withoutTier = new FakeOmpProcess({ stdout })
+    await runOmpAgent(
+      { prompt: 'go', model: { backend: 'omp', modelID: 'gpt-5.5' } },
+      withoutTier,
+    )
+    expect(withoutTier.request?.args).not.toContain('--service-tier')
+  })
+
   test('reports process failures without leaking raw JSON as the main result', async () => {
     const process = new FakeOmpProcess({
       stdout: JSON.stringify({ type: 'session', id: 'omp-session-1' }),
