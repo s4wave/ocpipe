@@ -9,7 +9,8 @@ import type { z } from 'zod/v4'
 // ============================================================================
 
 /** Backend type for running prompts. */
-export type BackendType = 'opencode' | 'claude-code' | 'codex' | 'pi' | 'omp'
+export type BackendType =
+  'opencode' | 'claude-code' | 'codex' | 'pi' | 'omp' | 'prime'
 
 /** Reasoning effort for Codex SDK threads. */
 export type CodexReasoningEffort =
@@ -164,6 +165,20 @@ export interface OmpOptions {
   extraArgs?: string[]
 }
 
+/** Prime Agent CLI specific session options. */
+export interface PrimeOptions {
+  /** Path to the Prime Agent executable (default: `prime-agent` from PATH). */
+  command?: string
+  /** Process cwd used to launch Prime Agent; defaults to the target workdir. */
+  processCwd?: string
+  /** Extra environment variables passed to the Prime Agent subprocess. */
+  env?: Record<string, string>
+  /** Thinking effort passed with `--thinking`; omitted when unset. */
+  thinking?: string
+  /** Extra raw Prime Agent arguments appended before the prompt separator. */
+  extraArgs?: string[]
+}
+
 /** Model configuration for LLM backends. */
 export interface ModelConfig {
   /** Backend to use (default: 'omp'). */
@@ -201,6 +216,8 @@ export interface ExecutionContext {
   pi?: PiOptions
   /** Oh My Pi specific options. */
   omp?: OmpOptions
+  /** Prime Agent specific options. */
+  prime?: PrimeOptions
   /** AbortSignal for cancelling in-flight backend requests. */
   signal?: AbortSignal
 }
@@ -423,6 +440,8 @@ export interface PipelineConfig {
   pi?: PiOptions
   /** Oh My Pi specific options. */
   omp?: OmpOptions
+  /** Prime Agent specific options. */
+  prime?: PrimeOptions
 }
 
 /** Options for running a pipeline step. */
@@ -463,6 +482,8 @@ export interface RunAgentOptions {
   pi?: PiOptions
   /** Oh My Pi specific options. */
   omp?: OmpOptions
+  /** Prime Agent specific options. */
+  prime?: PrimeOptions
   /** AbortSignal for cancelling the request. */
   signal?: AbortSignal
 }

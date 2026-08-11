@@ -11,7 +11,7 @@
 - **Type-safe** Define inputs and outputs with Zod schemas
 - **Modular** Compose modules into complex pipelines
 - **Checkpoints** Resume from any step
-- **Multi-backend** Choose between Oh My Pi, OpenCode, Claude Code SDK, Codex SDK, or Pi
+- **Multi-backend** Choose between Prime Agent, Oh My Pi, OpenCode, Claude Code SDK, Codex SDK, or Pi
 - **Auto-correction** Fixes schema mismatches automatically
 
 ### Quick Start
@@ -50,7 +50,14 @@ type GreetOut = InferOutputs<typeof Greet> // { greeting: string }
 
 ### Backends
 
-ocpipe supports five backends for running LLM prompts:
+ocpipe supports six backends for running LLM prompts:
+
+**Prime Agent** - Uses the `prime-agent` CLI in headless JSON print mode and preserves sessions between pipeline steps.
+
+```typescript
+defaultModel: { backend: 'prime', modelID: '' },
+prime: { command: '/path/to/prime-agent.sh', thinking: 'high' },
+```
 
 **Oh My Pi** (default) - Uses the `omp` CLI in headless JSON print mode.
 
@@ -96,6 +103,8 @@ pi: { command: 'pi' },
 ```
 
 ### Requirements
+
+**For Prime Agent:** Install `prime-agent` or configure `prime.command`, then authenticate its provider.
 
 **For Oh My Pi:** Install the `omp` CLI and authenticate the models it uses.
 

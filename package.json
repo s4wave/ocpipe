@@ -1,7 +1,7 @@
 {
   "name": "ocpipe",
   "version": "0.6.13",
-  "description": "SDK for LLM pipelines with OpenCode, OMP, Codex, Claude Code, Pi, and Zod",
+  "description": "SDK for LLM pipelines with Prime Agent, OpenCode, OMP, Codex, Claude Code, Pi, and Zod",
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -17,6 +17,7 @@
   "author": "s4wave",
   "keywords": [
     "dspy",
+    "prime-agent",
     "omp",
     "opencode",
     "codex",

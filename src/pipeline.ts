@@ -37,6 +37,7 @@ export class Pipeline<S extends BaseState> {
       codex: config.codex,
       pi: config.pi,
       omp: config.omp,
+      prime: config.prime,
     }
   }
 

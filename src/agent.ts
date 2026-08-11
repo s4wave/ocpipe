@@ -13,6 +13,7 @@ import { OutputLimitError } from './errors.js'
 import { PROJECT_ROOT, TMP_DIR } from './paths.js'
 import type { RunAgentOptions, RunAgentResult } from './types.js'
 import { runOmpAgent } from './omp.js'
+import { runPrimeAgent } from './prime.js'
 import { runPiAgent } from './pi.js'
 
 /** runAgent dispatches to the selected backend. */
@@ -20,6 +21,10 @@ export async function runAgent(
   options: RunAgentOptions,
 ): Promise<RunAgentResult> {
   const backend = options.model.backend ?? 'omp'
+
+  if (backend === 'prime') {
+    return runPrimeAgent(options)
+  }
 
   if (backend === 'claude-code') {
     const { runClaudeCodeAgent } = await import('./claude-code.js')

@@ -94,6 +94,7 @@ export type {
   ClaudeCodeOptions,
   PiOptions,
   OmpOptions,
+  PrimeOptions,
   CodexApprovalPolicy,
   CodexConfigValue,
   CodexOptions,

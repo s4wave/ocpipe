@@ -15,12 +15,20 @@ const ompBackend = vi.hoisted(() => ({
   runOmpAgent: vi.fn(),
 }))
 
+const primeBackend = vi.hoisted(() => ({
+  runPrimeAgent: vi.fn(),
+}))
+
 vi.mock('child_process', () => ({
   spawn: childProcess.spawn,
 }))
 
 vi.mock('./omp.js', () => ({
   runOmpAgent: ompBackend.runOmpAgent,
+}))
+
+vi.mock('./prime.js', () => ({
+  runPrimeAgent: primeBackend.runPrimeAgent,
 }))
 
 import { runAgent } from './agent.js'
@@ -114,6 +122,11 @@ describe('runAgent backend selection', () => {
       text: 'OMP response',
       sessionId: 'omp-session',
     })
+    primeBackend.runPrimeAgent.mockReset()
+    primeBackend.runPrimeAgent.mockResolvedValue({
+      text: 'Prime response',
+      sessionId: 'prime-session',
+    })
   })
 
   test('omitting model.backend routes to OMP without creating .opencode prompts', async () => {
@@ -147,6 +160,20 @@ describe('runAgent backend selection', () => {
     } finally {
       await rm(workdir, { recursive: true, force: true })
     }
+  })
+
+  test('routes the Prime backend to Prime Agent', async () => {
+    await expect(
+      runAgent({
+        prompt: 'route through Prime Agent',
+        model: { backend: 'prime', modelID: '' },
+      }),
+    ).resolves.toEqual({
+      text: 'Prime response',
+      sessionId: 'prime-session',
+    })
+    expect(primeBackend.runPrimeAgent).toHaveBeenCalledOnce()
+    expect(ompBackend.runOmpAgent).not.toHaveBeenCalled()
   })
 
   test('OpenCode backend does not require or pass named agents', async () => {
