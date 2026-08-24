@@ -319,7 +319,6 @@ async function runOpencodeAgent(
   }
 
   const command = opencode?.command ?? 'opencode'
-  console.error(`[DEBUG] Running: ${command} ${args.join(' ')}`)
 
   const { promise, resolve, reject } = Promise.withResolvers<RunAgentResult>()
   const budget = new OutputBudget()
