@@ -31,6 +31,7 @@ interface PrimeRunSummary {
   sawJsonEvent: boolean
   sessionId: string
   finalMessage: string
+  assistantError: string
 }
 
 const defaultPrimeCommand = 'prime-agent'
@@ -88,11 +89,16 @@ export async function runPrimeAgent(
     if (result.exitCode !== 0 || result.signal) {
       const message = firstNonEmpty(
         summary.finalMessage,
+        summary.assistantError,
         result.stderr.trim(),
         result.stdout.trim(),
         detail,
       )
       throw new Error(`Prime Agent exited with ${detail}: ${message}`)
+    }
+
+    if (summary.assistantError) {
+      throw new Error(summary.assistantError)
     }
 
     const response = firstNonEmpty(
@@ -143,6 +149,7 @@ function parsePrimeOutput(stdout: string): PrimeRunSummary {
     sawJsonEvent: false,
     sessionId: '',
     finalMessage: '',
+    assistantError: '',
   }
   for (const rawLine of stdout.split('\n')) {
     const line = rawLine.trim()
@@ -164,12 +171,29 @@ function parsePrimeOutput(stdout: string): PrimeRunSummary {
       continue
     }
     if (stringValue(event.type) === 'message_end') {
+      const error = assistantError(event.message)
       const text = assistantText(event.message)
-      if (text) summary.finalMessage = text
+      if (error) {
+        summary.assistantError = error
+        summary.finalMessage = ''
+      } else if (text) {
+        summary.assistantError = ''
+        summary.finalMessage = text
+      }
     }
   }
   if (!summary.sawJsonEvent) summary.finalMessage = stdout.trim()
   return summary
+}
+
+function assistantError(raw: unknown): string {
+  if (!isRecord(raw) || stringValue(raw.role) !== 'assistant') return ''
+  const stopReason = stringValue(raw.stopReason)
+  if (stopReason !== 'error' && stopReason !== 'aborted') return ''
+  return firstNonEmpty(
+    stringValue(raw.errorMessage),
+    `Prime Agent assistant ${stopReason}`,
+  )
 }
 
 function assistantText(raw: unknown): string {

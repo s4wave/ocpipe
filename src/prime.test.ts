@@ -116,4 +116,56 @@ describe('runPrimeAgent', () => {
       ),
     ).rejects.toThrow('Prime Agent returned an empty final message')
   })
+
+  test('preserves a structured assistant error after Prime Agent exhausts retries', async () => {
+    const errorMessage = [
+      '429 Provider returned error',
+      'stealth/ox-alpha is temporarily rate-limited upstream. Please retry shortly.',
+    ].join('\n')
+    const errorEvent = JSON.stringify({
+      type: 'message_end',
+      message: {
+        role: 'assistant',
+        content: [],
+        stopReason: 'error',
+        errorMessage,
+      },
+    })
+
+    await expect(
+      runPrimeAgent(
+        { prompt: 'hello', model: { backend: 'prime', modelID: '' } },
+        processResult(Array(4).fill(errorEvent).join('\n')),
+      ),
+    ).rejects.toThrow(errorMessage)
+  })
+
+  test('returns a visible response after Prime Agent recovers from an assistant error', async () => {
+    const output = [
+      JSON.stringify({
+        type: 'message_end',
+        message: {
+          role: 'assistant',
+          content: [],
+          stopReason: 'error',
+          errorMessage: '429 Provider returned error',
+        },
+      }),
+      JSON.stringify({
+        type: 'message_end',
+        message: {
+          role: 'assistant',
+          content: [{ type: 'text', text: 'Recovered response' }],
+          stopReason: 'stop',
+        },
+      }),
+    ].join('\n')
+
+    await expect(
+      runPrimeAgent(
+        { prompt: 'hello', model: { backend: 'prime', modelID: '' } },
+        processResult(output),
+      ),
+    ).resolves.toEqual({ text: 'Recovered response', sessionId: '' })
+  })
 })
