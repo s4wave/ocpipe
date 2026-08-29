@@ -49,7 +49,7 @@ export { createSessionId, createBaseState, extendBaseState } from './state.js'
 
 // Agent integration
 export { runAgent, logStep } from './agent.js'
-export { buildCodexRunSummary, formatCodexRunSummary } from './codex.js'
+export { buildCodexRunSummary, formatCodexRunSummary } from './codex-summary.js'
 export { OutputLimitError } from './errors.js'
 
 // Response parsing

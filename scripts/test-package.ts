@@ -66,6 +66,7 @@ export const Example = signature({
   )
   await run([bun, 'install', '--ignore-scripts'], consumer)
   await run([bun, 'x', 'tsgo', '--noEmit'], consumer)
+  await run([bun, 'index.ts'], consumer)
   await absent(join(consumer, 'node_modules/@anthropic-ai/claude-agent-sdk'))
   await absent(join(consumer, 'node_modules/@openai/codex-sdk'))
 } finally {
