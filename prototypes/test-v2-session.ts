@@ -86,7 +86,9 @@ async function sendAndStream(
   }
 
   const fullText = textParts.join('')
-  console.log(`Response (${fullText.length} chars): ${fullText.slice(0, 200)}...`)
+  console.log(
+    `Response (${fullText.length} chars): ${fullText.slice(0, 200)}...`,
+  )
   console.log(`Session ID: ${capturedSessionId}`)
   if (resultMsg) {
     console.log(`Result subtype: ${resultMsg.subtype}`)
@@ -133,7 +135,9 @@ async function main() {
     session2 = unstable_v2_resumeSession(sessionId, sessionOptions)
   } catch (err) {
     console.error(`\nFAIL: Could not resume session: ${err}`)
-    console.log('This confirms the v2 API issue — close() killed the subprocess before persisting.')
+    console.log(
+      'This confirms the v2 API issue — close() killed the subprocess before persisting.',
+    )
     process.exit(1)
   }
 
@@ -146,7 +150,9 @@ async function main() {
     )
   } catch (err) {
     console.error(`\nFAIL: Error during resumed session: ${err}`)
-    console.log('The resumed session failed — session data may not have been persisted.')
+    console.log(
+      'The resumed session failed — session data may not have been persisted.',
+    )
     session2.close()
     process.exit(1)
   }
@@ -155,17 +161,24 @@ async function main() {
 
   // Step 3: Check if context was preserved
   console.log('\n=== RESULTS ===')
-  const hasContext = second.text.includes('PINEAPPLE') || second.text.includes('42')
+  const hasContext =
+    second.text.includes('PINEAPPLE') || second.text.includes('42')
   console.log(`Session persisted: ${hasContext ? 'YES' : 'NO'}`)
-  console.log(`Session ID match: ${second.sessionId === sessionId ? 'SAME' : 'DIFFERENT'}`)
+  console.log(
+    `Session ID match: ${second.sessionId === sessionId ? 'SAME' : 'DIFFERENT'}`,
+  )
 
   if (!hasContext) {
     console.log('\nWARN: The resumed session did NOT recall the secret code.')
     console.log('This confirms the v2 API session persistence issue.')
-    console.log('close() likely sends SIGTERM before the subprocess can persist session data.')
+    console.log(
+      'close() likely sends SIGTERM before the subprocess can persist session data.',
+    )
   } else {
     console.log('\nSUCCESS: The resumed session recalled the secret code!')
-    console.log('v2 session API persistence is working (possibly with the persistSession flag).')
+    console.log(
+      'v2 session API persistence is working (possibly with the persistSession flag).',
+    )
   }
 }
 

@@ -69,12 +69,12 @@ export async function runOmpAgent(
   signal?.addEventListener('abort', abortHandler, { once: true })
   let timedOut = false
   const timeout =
-    timeoutSec > 0 ?
-      setTimeout(() => {
-        timedOut = true
-        abort.abort()
-      }, timeoutSec * 1000)
-    : null
+    timeoutSec > 0
+      ? setTimeout(() => {
+          timedOut = true
+          abort.abort()
+        }, timeoutSec * 1000)
+      : null
 
   try {
     const result = await processRunner.run({
@@ -85,8 +85,9 @@ export async function runOmpAgent(
       signal: abort.signal,
     })
     const summary = parseOmpOutput(result.stdout)
-    const detail =
-      result.signal ? `signal ${result.signal}` : `status ${result.exitCode}`
+    const detail = result.signal
+      ? `signal ${result.signal}`
+      : `status ${result.exitCode}`
     if (result.exitCode !== 0 || result.signal) {
       const message = firstNonEmpty(
         summary.finalMessage,

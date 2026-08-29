@@ -65,8 +65,9 @@ class IssueAnalyzer extends SignatureModule<typeof AnalyzeIssue> {
 
 async function main() {
   // Check for --jq flag
-  const method: CorrectionMethod =
-    process.argv.includes('--jq') ? 'jq' : 'json-patch'
+  const method: CorrectionMethod = process.argv.includes('--jq')
+    ? 'jq'
+    : 'json-patch'
 
   const pipeline = new Pipeline(
     {

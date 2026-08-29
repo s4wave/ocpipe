@@ -239,19 +239,18 @@ export async function runClaudeCodeAgent(
 
     // Set up timeout
     const timeoutPromise =
-      timeoutSec > 0 ?
-        new Promise<never>((_, reject) => {
-          timeoutId = setTimeout(() => {
-            q.close()
-            reject(new Error(`Timeout after ${timeoutSec}s`))
-          }, timeoutSec * 1000)
-        })
-      : null
+      timeoutSec > 0
+        ? new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => {
+              q.close()
+              reject(new Error(`Timeout after ${timeoutSec}s`))
+            }, timeoutSec * 1000)
+          })
+        : null
 
     // Set up abort promise
-    const abortPromise =
-      signal ?
-        new Promise<never>((_, reject) => {
+    const abortPromise = signal
+      ? new Promise<never>((_, reject) => {
           signal.addEventListener(
             'abort',
             () => reject(new Error('Request aborted')),

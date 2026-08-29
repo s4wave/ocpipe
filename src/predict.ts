@@ -166,11 +166,11 @@ export class Predict<S extends AnySignature> {
     const errorMessages =
       errors.map((e) => `${e.path}: ${e.message}`).join('; ') || 'Unknown error'
     const correctionAttempts =
-      this.config.correction !== false ?
-        typeof this.config.correction === 'object' ?
-          (this.config.correction.maxRounds ?? 3)
-        : 3
-      : 0
+      this.config.correction !== false
+        ? typeof this.config.correction === 'object'
+          ? (this.config.correction.maxRounds ?? 3)
+          : 3
+        : 0
     throw new SchemaValidationError(
       `Schema validation failed: ${errorMessages}`,
       errors,
@@ -274,13 +274,17 @@ export class Predict<S extends AnySignature> {
 
       // Build prompt based on correction method
       const patchPrompt =
-        method === 'jq' ?
-          errorsToFix.length === 1 ?
-            buildPatchPrompt(errorsToFix[0]!, currentJson, this.sig.outputs)
-          : buildBatchPatchPrompt(errorsToFix, currentJson)
-        : errorsToFix.length === 1 ?
-          buildJsonPatchPrompt(errorsToFix[0]!, currentJson, this.sig.outputs)
-        : buildBatchJsonPatchPrompt(errorsToFix, currentJson)
+        method === 'jq'
+          ? errorsToFix.length === 1
+            ? buildPatchPrompt(errorsToFix[0]!, currentJson, this.sig.outputs)
+            : buildBatchPatchPrompt(errorsToFix, currentJson)
+          : errorsToFix.length === 1
+            ? buildJsonPatchPrompt(
+                errorsToFix[0]!,
+                currentJson,
+                this.sig.outputs,
+              )
+            : buildBatchJsonPatchPrompt(errorsToFix, currentJson)
 
       // Use same session (model has context) unless correction model specified
       const patchResult = await runAgent({
@@ -401,7 +405,8 @@ export class Predict<S extends AnySignature> {
     // Add field descriptions from our config (toJSONSchema uses .describe() metadata)
     // Since our FieldConfig has a separate desc field, merge it in
     const props = jsonSchema.properties as
-      Record<string, Record<string, unknown>> | undefined
+      | Record<string, Record<string, unknown>>
+      | undefined
     if (props) {
       for (const [name, config] of Object.entries(this.sig.outputs) as [
         string,

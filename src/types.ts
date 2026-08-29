@@ -10,19 +10,33 @@ import type { z } from 'zod/v4'
 
 /** Backend type for running prompts. */
 export type BackendType =
-  'opencode' | 'claude-code' | 'codex' | 'pi' | 'omp' | 'prime'
+  | 'opencode'
+  | 'claude-code'
+  | 'codex'
+  | 'pi'
+  | 'omp'
+  | 'prime'
 
 /** Reasoning effort for Codex SDK threads. */
 export type CodexReasoningEffort =
-  'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
+  | 'minimal'
+  | 'low'
+  | 'medium'
+  | 'high'
+  | 'xhigh'
 
 /** Codex sandbox mode. */
 export type CodexSandboxMode =
-  'read-only' | 'workspace-write' | 'danger-full-access'
+  | 'read-only'
+  | 'workspace-write'
+  | 'danger-full-access'
 
 /** Codex approval policy. */
 export type CodexApprovalPolicy =
-  'never' | 'on-request' | 'on-failure' | 'untrusted'
+  | 'never'
+  | 'on-request'
+  | 'on-failure'
+  | 'untrusted'
 
 /** Codex web search mode. */
 export type CodexWebSearchMode = 'disabled' | 'cached' | 'live'
@@ -37,7 +51,10 @@ export type CodexConfigValue =
 
 /** Permission mode for Claude Code sessions. */
 export type PermissionMode =
-  'default' | 'acceptEdits' | 'bypassPermissions' | 'plan'
+  | 'default'
+  | 'acceptEdits'
+  | 'bypassPermissions'
+  | 'plan'
 
 /** Subagent definition for Claude Code's Task tool dispatch. */
 export interface AgentDefinition {
@@ -64,7 +81,8 @@ export interface ClaudeCodeOptions {
    * Can be a full string or use the preset format with append.
    */
   systemPrompt?:
-    string | { type: 'preset'; preset: 'claude_code'; append: string }
+    | string
+    | { type: 'preset'; preset: 'claude_code'; append: string }
   /**
    * Subagent definitions for parallel task dispatch via the Task tool.
    * Keys are agent names, values are agent definitions.
@@ -327,9 +345,9 @@ export type InferInputs<
     Record<string, FieldConfig>
   >,
 > =
-  S extends SignatureDef<infer I, Record<string, FieldConfig>> ?
-    { [K in keyof I]: z.infer<I[K]['type']> }
-  : never
+  S extends SignatureDef<infer I, Record<string, FieldConfig>>
+    ? { [K in keyof I]: z.infer<I[K]['type']> }
+    : never
 
 /** Infer the output type from a signature definition. */
 export type InferOutputs<
@@ -338,9 +356,9 @@ export type InferOutputs<
     Record<string, FieldConfig>
   >,
 > =
-  S extends SignatureDef<Record<string, FieldConfig>, infer O> ?
-    { [K in keyof O]: z.infer<O[K]['type']> }
-  : never
+  S extends SignatureDef<Record<string, FieldConfig>, infer O>
+    ? { [K in keyof O]: z.infer<O[K]['type']> }
+    : never
 
 // ============================================================================
 // Retry Configuration
@@ -380,7 +398,9 @@ export interface CorrectionConfig {
 
 /** Error codes for field errors, enabling robust error type detection. */
 export type FieldErrorCode =
-  'json_parse_failed' | 'no_json_found' | 'schema_validation_failed'
+  | 'json_parse_failed'
+  | 'no_json_found'
+  | 'schema_validation_failed'
 
 /** A field-level error from schema validation. */
 export interface FieldError {
@@ -496,6 +516,38 @@ export interface RunAgentResult {
   sessionId: string
   /** Clean run summary, set for the Codex backend. */
   runSummary?: CodexRunSummary
+}
+
+/** CodexRunResult is the provider-neutral input accepted by buildCodexRunSummary. */
+export interface CodexRunResult {
+  finalResponse: string
+  items: readonly CodexRunItem[]
+  usage?: CodexRunUsage | null
+}
+
+/** CodexRunItem contains the fields used when projecting a Codex run summary. */
+export interface CodexRunItem {
+  type: string
+  text?: string
+  command?: string
+  status?: string
+  exit_code?: number | null
+  changes?: readonly CodexRunFileChangeInput[]
+  message?: string
+}
+
+/** CodexRunFileChangeInput identifies a changed file in a Codex run result. */
+export interface CodexRunFileChangeInput {
+  path: string
+  kind: 'add' | 'update' | 'delete'
+}
+
+/** CodexRunUsage contains the token counters used in a Codex run summary. */
+export interface CodexRunUsage {
+  input_tokens: number
+  cached_input_tokens: number
+  output_tokens: number
+  reasoning_output_tokens: number
 }
 
 /** CodexRunCommand records one command the Codex agent executed. */

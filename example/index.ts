@@ -17,9 +17,8 @@ async function main() {
   const pipeline = new Pipeline(
     {
       name: 'hello-world',
-      defaultModel:
-        useClaudeCode ?
-          { backend: 'claude-code', modelID: 'sonnet' }
+      defaultModel: useClaudeCode
+        ? { backend: 'claude-code', modelID: 'sonnet' }
         : { backend: 'omp', modelID: 'gpt-5.5' },
       checkpointDir: './ckpt',
       logDir: './logs',

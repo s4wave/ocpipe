@@ -68,12 +68,12 @@ export async function runPrimeAgent(
   signal?.addEventListener('abort', abortHandler, { once: true })
   let timedOut = false
   const timeout =
-    timeoutSec > 0 ?
-      setTimeout(() => {
-        timedOut = true
-        abort.abort()
-      }, timeoutSec * 1000)
-    : null
+    timeoutSec > 0
+      ? setTimeout(() => {
+          timedOut = true
+          abort.abort()
+        }, timeoutSec * 1000)
+      : null
 
   try {
     const result = await processRunner.run({
@@ -84,8 +84,9 @@ export async function runPrimeAgent(
       signal: abort.signal,
     })
     const summary = parsePrimeOutput(result.stdout)
-    const detail =
-      result.signal ? `signal ${result.signal}` : `status ${result.exitCode}`
+    const detail = result.signal
+      ? `signal ${result.signal}`
+      : `status ${result.exitCode}`
     if (result.exitCode !== 0 || result.signal) {
       const message = firstNonEmpty(
         summary.finalMessage,

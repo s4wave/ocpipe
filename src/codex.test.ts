@@ -1,5 +1,8 @@
+import type { RunResult } from '@openai/codex-sdk'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+
 import { OutputLimitError } from './errors.js'
+import type { CodexRunSummary } from './types.js'
 
 const sdk = vi.hoisted(() => ({
   codex: vi.fn(),
@@ -27,6 +30,9 @@ import {
   formatCodexRunSummary,
   runCodexAgent,
 } from './codex.js'
+
+const _buildCodexRunSummaryForSdk: (result: RunResult) => CodexRunSummary =
+  buildCodexRunSummary
 
 describe('filterCodexLogText', () => {
   test('suppresses timestamped Codex warning lines', () => {
@@ -232,7 +238,7 @@ describe('buildCodexRunSummary / formatCodexRunSummary', () => {
   test('marks the run failed when an error item is present', () => {
     const summary = buildCodexRunSummary({
       finalResponse: '',
-      items: [{ id: 'e1', type: 'error', message: 'patch failed' }],
+      items: [{ type: 'error', message: 'patch failed' }],
       usage: null,
     })
 

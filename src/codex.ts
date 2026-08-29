@@ -7,13 +7,13 @@
 import {
   Codex,
   type CodexOptions as CodexSdkClientOptions,
-  type RunResult,
   type ThreadOptions,
 } from '@openai/codex-sdk'
 import { OutputLimitError } from './errors.js'
 import { PROJECT_ROOT } from './paths.js'
 import type {
   CodexOptions,
+  CodexRunResult,
   CodexRunSummary,
   RunAgentOptions,
   RunAgentResult,
@@ -113,9 +113,9 @@ export async function runCodexAgent(
   const client = new Codex(buildCodexClientOptions(codex))
   const threadOptions = buildCodexThreadOptions(model.modelID, cwd, codex)
   const thread =
-    sessionId && !codex?.ephemeral ?
-      client.resumeThread(sessionId, threadOptions)
-    : client.startThread(threadOptions)
+    sessionId && !codex?.ephemeral
+      ? client.resumeThread(sessionId, threadOptions)
+      : client.startThread(threadOptions)
 
   const promptPreview = prompt.slice(0, 50).replace(/\n/g, ' ')
   const sessionInfo =
@@ -129,12 +129,12 @@ export async function runCodexAgent(
   const abortHandler = () => abort.abort()
   signal?.addEventListener('abort', abortHandler, { once: true })
   const timeout =
-    timeoutSec > 0 ?
-      setTimeout(() => {
-        timedOut = true
-        abort.abort()
-      }, timeoutSec * 1000)
-    : null
+    timeoutSec > 0
+      ? setTimeout(() => {
+          timedOut = true
+          abort.abort()
+        }, timeoutSec * 1000)
+      : null
 
   try {
     const result = await thread.run(prompt, { signal: abort.signal })
@@ -170,7 +170,7 @@ export async function runCodexAgent(
 }
 
 /** buildCodexRunSummary projects a Codex turn into a parent-readable summary. */
-export function buildCodexRunSummary(result: RunResult): CodexRunSummary {
+export function buildCodexRunSummary(result: CodexRunResult): CodexRunSummary {
   const commands: CodexRunSummary['commands'] = []
   const fileChanges: CodexRunSummary['fileChanges'] = []
   let errorMessage = ''
@@ -182,23 +182,30 @@ export function buildCodexRunSummary(result: RunResult): CodexRunSummary {
         if (item.text) finalMessage = item.text
         break
       case 'command_execution':
-        commands.push({
-          command: item.command,
-          status: item.status,
-          exitCode: item.exit_code ?? null,
-        })
-        break
-      case 'file_change':
-        for (const change of item.changes) {
-          fileChanges.push({
-            path: change.path,
-            kind: change.kind,
+        if (
+          typeof item.command === 'string' &&
+          typeof item.status === 'string'
+        ) {
+          commands.push({
+            command: item.command,
             status: item.status,
+            exitCode: item.exit_code ?? null,
           })
         }
         break
+      case 'file_change':
+        if (item.changes && typeof item.status === 'string') {
+          for (const change of item.changes) {
+            fileChanges.push({
+              path: change.path,
+              kind: change.kind,
+              status: item.status,
+            })
+          }
+        }
+        break
       case 'error':
-        errorMessage = item.message
+        if (typeof item.message === 'string') errorMessage = item.message
         break
     }
   }
@@ -210,9 +217,8 @@ export function buildCodexRunSummary(result: RunResult): CodexRunSummary {
     errorMessage,
     commands,
     fileChanges,
-    tokens:
-      usage ?
-        {
+    tokens: usage
+      ? {
           input: usage.input_tokens,
           cached: usage.cached_input_tokens,
           output: usage.output_tokens,
@@ -270,9 +276,9 @@ function buildCodexClientOptions(
   codex: CodexOptions | undefined,
 ): CodexSdkClientOptions {
   return {
-    ...(codex?.pathToCodexExecutable ?
-      { codexPathOverride: codex.pathToCodexExecutable }
-    : {}),
+    ...(codex?.pathToCodexExecutable
+      ? { codexPathOverride: codex.pathToCodexExecutable }
+      : {}),
     ...(codex?.baseUrl ? { baseUrl: codex.baseUrl } : {}),
     ...(codex?.apiKey ? { apiKey: codex.apiKey } : {}),
     ...(codex?.env ? { env: codex.env } : {}),
@@ -290,17 +296,17 @@ function buildCodexThreadOptions(
     workingDirectory: cwd,
     skipGitRepoCheck: true,
     sandboxMode: codex?.sandbox ?? 'read-only',
-    ...(codex?.reasoningEffort ?
-      { modelReasoningEffort: codex.reasoningEffort }
-    : {}),
+    ...(codex?.reasoningEffort
+      ? { modelReasoningEffort: codex.reasoningEffort }
+      : {}),
     ...(codex?.addDirs ? { additionalDirectories: codex.addDirs } : {}),
     ...(codex?.approvalPolicy ? { approvalPolicy: codex.approvalPolicy } : {}),
-    ...(codex?.networkAccessEnabled !== undefined ?
-      { networkAccessEnabled: codex.networkAccessEnabled }
-    : {}),
+    ...(codex?.networkAccessEnabled !== undefined
+      ? { networkAccessEnabled: codex.networkAccessEnabled }
+      : {}),
     ...(codex?.webSearchMode ? { webSearchMode: codex.webSearchMode } : {}),
-    ...(codex?.webSearchEnabled !== undefined ?
-      { webSearchEnabled: codex.webSearchEnabled }
-    : {}),
+    ...(codex?.webSearchEnabled !== undefined
+      ? { webSearchEnabled: codex.webSearchEnabled }
+      : {}),
   }
 }

@@ -58,7 +58,9 @@ async function runQuery(
     ...(sessionId && { resume: sessionId }),
   }
 
-  console.log(`\n--- v1 query() ${sessionId ? `[resume:${sessionId}]` : '[new]'} ---`)
+  console.log(
+    `\n--- v1 query() ${sessionId ? `[resume:${sessionId}]` : '[new]'} ---`,
+  )
   console.log(`Prompt: ${prompt}`)
 
   const q = query({ prompt, options })
@@ -83,7 +85,9 @@ async function runQuery(
   }
 
   const fullText = textParts.join('')
-  console.log(`Response (${fullText.length} chars): ${fullText.slice(0, 200)}...`)
+  console.log(
+    `Response (${fullText.length} chars): ${fullText.slice(0, 200)}...`,
+  )
   console.log(`Session ID: ${capturedSessionId}`)
   if (resultMsg) {
     console.log(`Result subtype: ${resultMsg.subtype}`)
@@ -122,9 +126,12 @@ async function main() {
 
   // Step 3: Check if context was preserved
   console.log('\n=== RESULTS ===')
-  const hasContext = second.text.includes('PINEAPPLE') || second.text.includes('42')
+  const hasContext =
+    second.text.includes('PINEAPPLE') || second.text.includes('42')
   console.log(`Session persisted: ${hasContext ? 'YES' : 'NO'}`)
-  console.log(`Session ID match: ${second.sessionId === first.sessionId ? 'SAME' : 'DIFFERENT'}`)
+  console.log(
+    `Session ID match: ${second.sessionId === first.sessionId ? 'SAME' : 'DIFFERENT'}`,
+  )
 
   if (!hasContext) {
     console.log('\nWARN: The resumed session did NOT recall the secret code.')

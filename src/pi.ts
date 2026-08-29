@@ -66,12 +66,12 @@ export async function runPiAgent(
   signal?.addEventListener('abort', abortHandler, { once: true })
   let timedOut = false
   const timeout =
-    timeoutSec > 0 ?
-      setTimeout(() => {
-        timedOut = true
-        abort.abort()
-      }, timeoutSec * 1000)
-    : null
+    timeoutSec > 0
+      ? setTimeout(() => {
+          timedOut = true
+          abort.abort()
+        }, timeoutSec * 1000)
+      : null
 
   const conn = processRunner.start({
     command: pi?.command ?? defaultPiCommand,
@@ -98,8 +98,9 @@ export async function runPiAgent(
     if (!response) {
       throw new Error('Pi RPC returned an empty final message')
     }
-    const modelSummary =
-      final.modelSummary ? ` model=${final.modelSummary}` : ''
+    const modelSummary = final.modelSummary
+      ? ` model=${final.modelSummary}`
+      : ''
     console.error(
       `<<< Pi done (${response.length} chars) [session:${nextSessionId}]${modelSummary}`,
     )

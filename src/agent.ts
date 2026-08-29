@@ -428,11 +428,11 @@ async function runOpencodeAgent(
   })
 
   timers.timeout =
-    timeoutSec > 0 ?
-      setTimeout(() => {
-        fail(new Error(`Timeout after ${timeoutSec}s`))
-      }, timeoutSec * 1000)
-    : undefined
+    timeoutSec > 0
+      ? setTimeout(() => {
+          fail(new Error(`Timeout after ${timeoutSec}s`))
+        }, timeoutSec * 1000)
+      : undefined
   signal?.addEventListener('abort', abortHandler, { once: true })
 
   proc.on('close', (code) => {

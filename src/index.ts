@@ -120,6 +120,10 @@ export type {
   // Agent types
   RunAgentOptions,
   RunAgentResult,
+  CodexRunResult,
+  CodexRunItem,
+  CodexRunFileChangeInput,
+  CodexRunUsage,
   CodexRunSummary,
   CodexRunCommand,
   CodexRunFileChange,
