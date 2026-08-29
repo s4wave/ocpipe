@@ -1,6 +1,6 @@
 {
   "name": "ocpipe",
-  "version": "0.6.16",
+  "version": "0.6.17",
   "description": "SDK for LLM pipelines with Prime Agent, OpenCode, OMP, Codex, Claude Code, Pi, and Zod",
   "type": "module",
   "repository": {
