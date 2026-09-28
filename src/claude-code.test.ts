@@ -92,4 +92,15 @@ describe('runClaudeCodeAgent system prompt resolution', () => {
     const captured = sdk.query.mock.calls[0]?.[0] as CapturedQuery
     expect(captured.options.systemPrompt).toBe('Use the explicit prompt only.')
   })
+
+  test('passes a pinned model ID to Claude Code unchanged', async () => {
+    await runClaudeCodeAgent({
+      prompt: 'answer plainly',
+      model: { backend: 'claude-code', modelID: 'claude-sonnet-5-5' },
+      timeoutSec: 0,
+    } as RunAgentOptions)
+
+    const captured = sdk.query.mock.calls[0]?.[0] as CapturedQuery
+    expect(captured.options.model).toBe('claude-sonnet-5-5')
+  })
 })
