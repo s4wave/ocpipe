@@ -183,6 +183,7 @@ export async function runClaudeCodeAgent(
     ...(systemPrompt && { systemPrompt }),
     // Resume from previous session if sessionId provided
     ...(sessionId && { resume: sessionId }),
+    ...(claudeCode?.effort && { effort: claudeCode.effort }),
     hooks: {
       PreToolUse: [{ hooks: [logToolCall] }],
     },

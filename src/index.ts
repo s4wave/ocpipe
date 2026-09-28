@@ -91,6 +91,7 @@ export type {
   AgentDefinition,
   BackendType,
   PermissionMode,
+  ClaudeCodeEffort,
   ClaudeCodeOptions,
   PiOptions,
   OmpOptions,

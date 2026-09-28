@@ -56,6 +56,9 @@ export type PermissionMode =
   | 'bypassPermissions'
   | 'plan'
 
+/** Reasoning effort for Claude Code sessions. */
+export type ClaudeCodeEffort = 'low' | 'medium' | 'high' | 'xhigh' | 'max'
+
 /** Subagent definition for Claude Code's Task tool dispatch. */
 export interface AgentDefinition {
   /** Natural language description of when to use this agent. */
@@ -74,6 +77,8 @@ export interface ClaudeCodeOptions {
   permissionMode?: PermissionMode
   /** Required when using 'bypassPermissions' mode. */
   dangerouslySkipPermissions?: boolean
+  /** Reasoning effort (default: the model's own default). */
+  effort?: ClaudeCodeEffort
   /** Path to Claude Code executable (default: auto-detected). */
   pathToClaudeCodeExecutable?: string
   /**
