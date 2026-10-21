@@ -16,7 +16,7 @@ const packageJSON = JSON.parse(
   await readFile(new URL('../package.json', import.meta.url), 'utf8'),
 ) as {
   version: string
-  devDependencies: { '@typescript/native-preview': string }
+  devDependencies: { 'tsrs': string }
 }
 const bun = process.execPath
 const directory = await mkdtemp(join(tmpdir(), 'ocpipe-package-'))
@@ -35,8 +35,8 @@ try {
         type: 'module',
         dependencies: { ocpipe: 'file:../ocpipe.tgz', zod: '4.4.3' },
         devDependencies: {
-          '@typescript/native-preview':
-            packageJSON.devDependencies['@typescript/native-preview'],
+          'tsrs':
+            packageJSON.devDependencies['tsrs'],
         },
       },
       null,
@@ -65,7 +65,7 @@ export const Example = signature({
     }),
   )
   await run([bun, 'install', '--ignore-scripts'], consumer)
-  await run([bun, 'x', 'tsgo', '--noEmit'], consumer)
+  await run([bun, 'x', 'tsrs', '--noEmit'], consumer)
   await run([bun, 'index.ts'], consumer)
   await absent(join(consumer, 'node_modules/@anthropic-ai/claude-agent-sdk'))
   await absent(join(consumer, 'node_modules/@openai/codex-sdk'))
